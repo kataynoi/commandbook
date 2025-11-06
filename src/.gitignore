@@ -1,0 +1,16 @@
+# CodeIgniter 4
+/writable/*
+/tests/_support/_generated/
+spark
+.env
+
+# Composer
+/vendor/*
+composer.lock
+
+# Docker
+db_data/
+
+# OS generated files
+.DS_Store
+Thumbs.db

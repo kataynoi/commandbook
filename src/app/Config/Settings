@@ -1,0 +1,44 @@
+<?php
+
+namespace App\Services;
+
+use App\Models\SettingsModel;
+
+class Settings
+{
+    protected $settingsModel;
+    protected $settings = [];
+
+    public function __construct()
+    {
+        $this->settingsModel = new SettingsModel();
+        $this->loadSettings();
+    }
+
+    private function loadSettings()
+    {
+        $settings = $this->settingsModel->findAll();
+        foreach ($settings as $setting) {
+            $this->settings[$setting['key']] = $setting['value'];
+        }
+    }
+
+    public function get(string $key)
+    {
+        return $this->settings[$key] ?? null;
+    }
+
+    public function set(string $key, $value)
+    {
+        $this->settings[$key] = $value;
+        return $this->settingsModel->save([
+            'key' => $key,
+            'value' => $value
+        ]);
+    }
+
+    public function saveSetting(string $key, $value)
+    {
+        return $this->set($key, $value);
+    }
+}

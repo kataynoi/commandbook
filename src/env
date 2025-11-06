@@ -1,0 +1,9 @@
+database.default.hostname = db
+database.default.database = xxx
+database.default.username = xxxx
+database.default.password = xxxxx # ใส่รหัสผ่านที่คุณตั้งในขั้นตอนที่ 2
+database.default.DBDriver = MySQLi
+database.default.port = 3306
+
+CI_ENVIRONMENT = development
+#CI_ENVIRONMENT = production

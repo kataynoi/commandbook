@@ -1,0 +1,37 @@
+services:
+  # 1. บริการ Nginx (เว็บเซิร์ฟเวอร์)
+  nginx:
+    image: nginx:alpine
+    container_name: ci4-nginx
+    ports:
+      - "8080:80"
+    volumes:
+      - ./src:/var/www/html
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - php
+  # 2. บริการ PHP
+  php:
+    build:
+      context: ./docker/php
+    container_name: ci4-php
+    volumes:
+      - ./src:/var/www/html
+
+# 3. บริการ MySQL (ฐานข้อมูล)
+  db:
+    image: mysql:8.0
+    container_name: ci4-db
+    restart: unless-stopped
+    ports: # <--- เพิ่มส่วนนี้เข้ามา
+      - "3306:3306" # <--- กำหนดการเชื่อม Port (Host:Container)
+    environment:
+      MYSQL_DATABASE: smiv_db
+      MYSQL_USER: smiv
+      MYSQL_PASSWORD: Smiv@15916
+      MYSQL_ROOT_PASSWORD: Smiv@15916##root
+    volumes:
+      - db_data:/var/lib/mysql # <-- แก้ไข path ให้สมบูรณ์
+
+volumes:
+  db_data:
