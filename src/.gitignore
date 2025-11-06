@@ -3,7 +3,7 @@
 /tests/_support/_generated/
 spark
 .env
-
+docker-compose.yml
 # Composer
 /vendor/*
 composer.lock
