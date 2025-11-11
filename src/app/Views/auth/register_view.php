@@ -101,37 +101,21 @@ $lineData = session()->get('line_register_data');
                     </div>
 
                     <hr>
-                    <p class="text-muted">กรุณาเลือกพื้นที่ที่ท่านสังกัด</p>
+                    <p class="text-muted">กรุณาเลือกหน่วยบริการที่ท่านสังกัด</p>
                     <div class="row">
-                        <!-- จังหวัด: ซ่อนหรือ disabled -->
-                        <div class="col-md-6 mb-3" style="display:none;">
-                            <label for="changwatcode" class="form-label">จังหวัด</label>
-                            <select class="form-select" id="changwatcode" name="changwatcode" disabled>
-                                <option value="<?= esc($default_province ?? '') ?>">
-                                    <?= esc($provinceName ?? '') ?>
-                                </option>
-                            </select>
-                        </div>
                         <!-- เพิ่ม input hidden เพื่อให้ส่ง changwatcode ไปกับฟอร์ม -->
                         <input type="hidden" name="changwatcode" value="<?= esc($default_province ?? '') ?>">
-                        <!-- อำเภอ: preload จาก $amphurs -->
-                        <div class="col-md-6 mb-3">
-                            <label for="ampurcodefull" class="form-label">อำเภอ</label>
-                            <select class="form-select" id="ampurcodefull" name="ampurcodefull" required>
-                                <option value="">-- เลือกอำเภอ --</option>
-                                <?php foreach ($amphurs as $amphur): ?>
-                                    <option value="<?= $amphur['ampurcodefull'] ?>" <?= old('ampurcodefull') == $amphur['ampurcodefull'] ? 'selected' : '' ?>>
-                                        <?= $amphur['ampurname'] ?>
+                        <div class="col-md-12 mb-3">
+                            <label for="hospcode" class="form-label">หน่วยบริการ</label>
+                            <select class="form-select" id="hospcode" name="hospcode" required>
+                                <option value="">-- เลือกหน่วยบริการ --</option>
+                                <?php foreach ($hospitals as $hospital): ?>
+                                    <option value="<?= $hospital['hospcode'] ?>" <?= old('hospcode') == $hospital['hospcode'] ? 'selected' : '' ?>>
+                                        <?= $hospital['hospname'] ?>
                                     </option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
-                        <div class="col-md-6 mb-3"><label for="hospcode" class="form-label">รพ.สต.</label><select class="form-select" id="hospcode" name="hospcode" required disabled>
-                                <option value="">-- กรุณาเลือกอำเภอก่อน --</option>
-                            </select></div>
-                        <div class="col-md-6 mb-3"><label for="villagecodefull" class="form-label">หมู่บ้าน (ถ้ามี)</label><select class="form-select" id="villagecodefull" name="villagecodefull" disabled>
-                                <option value="">-- กรุณาเลือก รพ.สต. ก่อน --</option>
-                            </select></div>
                     </div>
                     <div class="d-grid mt-4"><button type="submit" class="btn btn-primary btn-lg">ลงทะเบียน</button></div>
                 </form>
@@ -153,44 +137,7 @@ $lineData = session()->get('line_register_data');
                 number: $('#number'),
                 symbol: $('#symbol')
             };
-            // อำเภอ -> รพ.สต.
-            $('#ampurcodefull').on('change', function() {
-                let amphureCode = $(this).val();
-                let hospitalSelect = $('#hospcode');
-                $('#villagecodefull').prop('disabled', true).html('<option value="">-- เลือก รพ.สต. ก่อน --</option>');
-                hospitalSelect.prop('disabled', true).html('<option value="">-- กำลังโหลด --</option>');
-                if (amphureCode) {
-                    $.post("<?= site_url('ajax/get-hospitals') ?>", {
-                        amphure_code: amphureCode
-                    }, function(data) {
-                        hospitalSelect.prop('disabled', false).html('<option value="">-- เลือก รพ.สต. --</option>');
-                        data.forEach(val => hospitalSelect.append(`<option value="${val.hoscode}">${val.hosname}</option>`));
-                    }, 'json');
-                } else {
-                    hospitalSelect.html('<option value="">-- กรุณาเลือกอำเภอก่อน --</option>');
-                }
-            });
-
-            // รพ.สต. -> หมู่บ้าน
-            $('#hospcode').on('change', function() {
-                let hospcode = $(this).val();
-                let villageSelect = $('#villagecodefull');
-                villageSelect.prop('disabled', true).html('<option value="">-- กำลังโหลด --</option>');
-                if (hospcode) {
-                    $.post("<?= site_url('ajax/get-villages') ?>", {
-                        hospcode: hospcode
-                    }, function(data) {
-                        villageSelect.prop('disabled', false).html('<option value="">-- เลือกหมู่บ้าน --</option>');
-                        if (data.length > 0) {
-                            data.forEach(val => villageSelect.append(`<option value="${val.villagecodefull}">${val.villagecodefull}.${val.villagename}</option>`));
-                        } else {
-                            villageSelect.html('<option value="">-- ไม่พบข้อมูลหมู่บ้านในสังกัด --</option>');
-                        }
-                    }, 'json');
-                } else {
-                    villageSelect.html('<option value="">-- กรุณาเลือก รพ.สต. ก่อน --</option>');
-                }
-            });
+            // Password validation script continues here
 
             function checkPasswordStrength() {
                 const pass = passwordInput.val();

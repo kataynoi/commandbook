@@ -4,7 +4,7 @@ $userRoles = session()->get('roles') ?? [];
 ?>
 <nav class="sb-topnav navbar navbar-expand navbar-dark bg-dark">
     <!-- Navbar Brand-->
-    <a class="navbar-brand ps-3" href="<?= site_url('/dashboard'); ?>">SMIV Mahasarakham</a>
+    <a class="navbar-brand ps-3" href="<?= site_url('/dashboard'); ?>">หนังสือคำสั่ง  สสจ. Mahasarakham</a>
     <!-- Sidebar Toggle-->
     <button class="btn btn-link btn-sm order-1 order-lg-0 me-4 me-lg-0" id="sidebarToggle" href="#!"><i class="fas fa-bars"></i></button>
     <!-- Navbar Search-->
@@ -16,23 +16,7 @@ $userRoles = session()->get('roles') ?? [];
     </form>
     <!-- Navbar-->
 
-    <ul class="navbar-nav ms-auto ms-md-0 me-3 me-lg-4">
-        <li class="nav-item dropdown">
-            <a class="nav-link" data-bs-toggle="dropdown" href="#" id="notification-bell">
-                <i class="far fa-bell"></i>
-                <span class="badge badge-warning navbar-badge" id="notification-count" style="display: none;"></span>
-            </a>
-            <div class="dropdown-menu dropdown-menu-lg dropdown-menu-end" id="notification-dropdown">
-                <span class="dropdown-item dropdown-header"><span id="notification-header-count">0</span> Notifications</span>
-                <div class="dropdown-divider"></div>
-                <div id="notification-list">
-                    <!-- รายการแจ้งเตือนจะถูกเพิ่มที่นี่โดย JavaScript -->
-                </div>
-                <div class="dropdown-divider"></div>
-                <a href="<?= site_url('notifications') ?>" class="dropdown-item dropdown-footer">See All Notifications</a>
-            </div>
-        </li>
-    </ul>
+   
     <ul class="navbar-nav ms-auto ms-md-0 me-3 me-lg-4">
         <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" id="navbarDropdown" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="fas fa-user fa-fw"></i>
@@ -94,64 +78,3 @@ $userRoles = session()->get('roles') ?? [];
 </div>
 
 <!-- กล่องแจ้งเตือน -->
-<div class="dropdown me-3">
-    <button class="btn btn-light position-relative" type="button" id="notificationDropdown" data-bs-toggle="dropdown" aria-expanded="false" title="แจ้งเตือน">
-        <i class="fas fa-bell"></i>แจ้งเตือน
-        <?php if (!empty($notifications)): ?>
-            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                <?= count($notifications) ?>
-            </span>
-        <?php endif; ?>
-    </button>
-    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="notificationDropdown" style="min-width: 350px;">
-        <li class="dropdown-header">แจ้งเตือน OAS</li>
-        <?php if (!empty($notifications)): ?>
-            <?php foreach ($notifications as $note): ?>
-                <li>
-                    <a class="dropdown-item small" href="<?= site_url('followup/visit/' . $note['patient_id']) ?>">
-                        <?= esc($note['message']) ?>
-                        <br>
-                        <span class="text-muted small"><?= esc($note['created_at']) ?></span>
-                    </a>
-                </li>
-            <?php endforeach; ?>
-        <?php else: ?>
-            <li><span class="dropdown-item text-muted">ไม่มีแจ้งเตือนใหม่</span></li>
-        <?php endif; ?>
-    </ul>
-</div>
-<script>
-$(document).ready(function() {
-    function fetchNotifications() {
-        $.get("<?= site_url('notifications/fetch-unread') ?>", function(data) {
-            const count = data.count;
-            const notifList = $('#notification-list');
-            notifList.empty();
-
-            if (count > 0) {
-                $('#notification-count').text(count).show();
-                $('#notification-header-count').text(count);
-                
-                data.notifications.forEach(notif => {
-                    const notifItem = `
-                        <a href="<?= site_url('notifications/mark-as-read/') ?>${notif.id}" class="dropdown-item">
-                            <i class="fas fa-exclamation-triangle text-warning mr-2"></i> ${notif.message}
-                            <span class="float-right text-muted text-sm">${new Date(notif.created_at).toLocaleString('th-TH')}</span>
-                        </a>
-                        <div class="dropdown-divider"></div>`;
-                    notifList.append(notifItem);
-                });
-
-            } else {
-                $('#notification-count').hide();
-                $('#notification-header-count').text('0');
-                notifList.html('<span class="dropdown-item text-muted">ไม่มีการแจ้งเตือนใหม่</span>');
-            }
-        }, 'json');
-    }
-    // ดึงข้อมูลครั้งแรกเมื่อโหลดหน้า
-    fetchNotifications(); 
-    // (Optional) ตั้งให้ดึงข้อมูลทุกๆ 1 นาที
-    // setInterval(fetchNotifications, 60000); 
-});
-</script>

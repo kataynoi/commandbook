@@ -1,0 +1,63 @@
+# ใช้ PHP 8.2-FPM เป็น Image พื้นฐาน 
+FROM php:8.2-fpm
+
+# ติดตั้งส่วนเสริมที่ CI4 ต้องการ 
+# (เพิ่ม libjpeg-dev เพื่อรองรับ GD library เต็มรูปแบบ)
+RUN apt-get update && apt-get install -y \
+    libicu-dev \
+    libzip-dev \
+    libpng-dev \
+    libjpeg-dev \
+    unzip \
+    && docker-php-ext-configure gd --with-jpeg \
+    && docker-php-ext-install intl pdo_mysql mysqli zip gd
+
+# Install Composer 
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+# ตั้งค่า Working Directory 
+WORKDIR /var/www/html
+
+# ----------------------------------------------------
+# ⬇️ ⬇️ ⬇️ ส่วนที่ผมแนะนำให้เพิ่ม ⬇️ ⬇️ ⬇️
+# ----------------------------------------------------
+
+# 1. คัดลอกเฉพาะไฟล์ composer.json และ composer.lock ก่อน
+#    เพื่อใช้ประโยชน์จาก Docker cache (ถ้าไฟล์นี้ไม่เปลี่ยน Build ครั้งถัดไปจะเร็วขึ้น)
+COPY composer.json composer.lock* ./
+
+# 2. รัน composer install เพื่อติดตั้ง dependencies (เช่น CI4, qrcode-lib)
+#    --no-dev คือไม่ติดตั้งส่วนเสริมสำหรับ dev (เหมาะสำหรับ production)
+RUN composer install --no-dev --no-interaction --no-progress --optimize-autoloader
+
+# 3. คัดลอกไฟล์โปรเจกต์ทั้งหมด (app, public, writable ฯลฯ) เข้าไปใน Image
+COPY . .
+
+# 4. (สำคัญมากสำหรับ CI4) ตั้งค่า Permission
+#    เปลี่ยนเจ้าของไฟล์ทั้งหมดเป็น www-data (user ที่ php-fpm ใช้รัน)
+#    เพื่อให้ CI4 สามารถเขียนไฟล์ log และ cache ได้
+RUN chown -R www-data:www-data /var/www/html
+
+# 5. (สำคัญมากสำหรับ CI4) ทำให้ folder 'writable' สามารถเขียนได้โดย group
+RUN chmod -R 775 /var/www/html/writable
+
+
+
+
+# ----------------------------------------------------V 1.00
+# ใช้ PHP 8.2-FPM เป็น Image พื้นฐาน
+FROM php:8.2-fpm
+
+# ติดตั้งส่วนเสริมที่ CI4 ต้องการ
+# Install necessary system dependencies, including the GD library
+RUN apt-get update && apt-get install -y \
+    libicu-dev \
+    libzip-dev \
+    libpng-dev \
+    unzip \
+    && docker-php-ext-install intl pdo_mysql mysqli zip gd
+
+# Install Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+WORKDIR /var/www/html

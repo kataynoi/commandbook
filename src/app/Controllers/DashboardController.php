@@ -18,7 +18,27 @@ class DashboardController extends BaseController
 {
     public function index()
     {
-       
+               $settingsModel = new SettingsModel();
+        $cchangwatModel = new CchangwatModel();
+        $campurModel = new CampurModel();
+
+        $provinceCode = $settingsModel->get('system_province_code');
+        $provinceName = '';
+        $amphurs = [];
+
+        if ($provinceCode) {
+            $province = $cchangwatModel->find($provinceCode);
+            $provinceName = $province ? $province['changwatname'] : '';
+            $amphurs = $campurModel->where('changwatcode', $provinceCode)
+                                   ->orderBy('ampurname', 'ASC')
+                                   ->findAll();
+        }
+
+        return view('dashboard/dashboard_view', [
+            'provinceCode' => $provinceCode,
+            'provinceName' => $provinceName,
+            'amphurs' => $amphurs,
+        ]);
     }
 
 }

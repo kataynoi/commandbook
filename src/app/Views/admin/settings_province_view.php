@@ -68,7 +68,7 @@ $(document).ready(function() {
             $.post("<?= site_url('reports/get-hospitals') ?>", { amphur_code: amphurCode }, function(data) {
                 if(data.length > 0){
                     data.forEach(hosp => {
-                        hospFilter.append(`<option value="${hosp.hoscode}">${hosp.hosname}</option>`);
+                        hospFilter.append(`<option value="${hosp.hospcode}">${hosp.hospname}</option>`);
                     });
                     hospFilter.prop('disabled', false);
                 }

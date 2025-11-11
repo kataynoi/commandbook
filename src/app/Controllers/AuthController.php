@@ -10,13 +10,11 @@ use App\Models\UserModel;
 use App\Models\UserRoleModel;
 use CodeIgniter\Controller;
 use App\Models\CchangwatModel;
-use App\Models\CampurModel;
-use App\Models\ChospitalModel; // <-- เพิ่ม Model ตำบล
-use App\Models\CvillageModel; // <-- เพิ่ม Model หมู่บ้าน
+use App\Models\ChospitalModel;
 use App\Models\SettingsModel;
 
 helper('activityLog');
-// <-- เรียก helper ที่นี่ (หลัง namespace, ก่อน class)
+
 class AuthController extends Controller
 {
     /**
@@ -38,27 +36,27 @@ class AuthController extends Controller
     public function register()
     {
         $settingsModel = new SettingsModel();
-        $campurModel = new CampurModel();
         $cchangwatModel = new CchangwatModel();
+        $chospitalModel = new ChospitalModel();
 
         $default_province = $settingsModel->get('system_province_code');
         $provinceName = '';
-        $amphurs = [];
+        $hospitals = [];
 
         if ($default_province) {
             $province = $cchangwatModel->find($default_province);
             $provinceName = $province ? $province['changwatname'] : '';
-            $amphurs = $campurModel->where('changwatcode', $default_province)
-                ->orderBy('ampurname', 'ASC')
+            $hospitals = $chospitalModel->where('provcode', $default_province)
+                ->orderBy('hospname', 'ASC')
                 ->findAll();
         }
 
         $data = [
-            'changwats' => $cchangwatModel->orderBy('changwatname', 'ASC')->findAll(),
-            'default_province' => $default_province, // <-- ส่งค่าจังหวัดเริ่มต้นไปที่ View
+            'default_province' => $default_province,
             'provinceName' => $provinceName,
-            'amphurs' => $amphurs,
+            'hospitals' => $hospitals,
         ];
+        
         log_activity('register_view', 'เปิดหน้าสมัครสมาชิก');
         return view('auth/register_view', $data);
     }
@@ -143,23 +141,20 @@ class AuthController extends Controller
     {
         // 1. ตั้งกฎการตรวจสอบข้อมูล (เพิ่ม villagecodefull)
         $rules = [
-            'fullname'      => 'required|min_length[3]|max_length[150]',
-            'position'      => 'required|max_length[100]',
-            'cid'          => 'required|valid_cid|is_unique[users.cid]', // <-- ตรวจสอบเลขบัตรประชาชน (CID) และไม่ซ้ำกัน
-            'username'      => 'required|min_length[4]|max_length[50]|is_unique[users.username]',
+            'fullname'     => 'required|min_length[3]|max_length[150]',
+            'position'     => 'required|max_length[100]',
+            'cid'          => 'required|valid_cid|is_unique[users.cid]',
+            'username'     => 'required|min_length[4]|max_length[50]|is_unique[users.username]',
             'password'     => 'required|strong_password',
-            'pass_confirm'  => 'required|matches[password]',
-            'changwatcode'  => 'required',
-            'ampurcodefull' => 'permit_empty',
-            'hospcode'      => 'permit_empty', // <-- เปลี่ยนจากตำบลเป็น รพ.สต.
-            'villagecodefull' => 'permit_empty' // <-- หมู่บ้านอาจจะไม่บังคับ (ถ้าต้องการบังคับให้เปลี่ยนเป็น 'required')
+            'pass_confirm' => 'required|matches[password]',
+            'hospcode'     => 'required'
         ];
 
         $messages = [
             'password' => [
                 'strong_password' => 'รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร ประกอบด้วยตัวพิมพ์ใหญ่, พิมพ์เล็ก, ตัวเลข และสัญลักษณ์พิเศษ (!@#$%^&*)'
             ],
-            'cid' => [ // <-- จุดที่แก้ไข
+            'cid' => [
                 'valid_cid' => 'เลขบัตรประชาชนไม่ถูกต้อง',
                 'is_unique' => 'เลขบัตรประชาชนนี้ถูกใช้ลงทะเบียนแล้ว'
             ]
@@ -172,29 +167,27 @@ class AuthController extends Controller
 
         $userModel = new UserModel();
         $data = [
-            'fullname'        => $this->request->getPost('fullname'),
-            'position'        => $this->request->getPost('position'),
-            'cid'             => $this->request->getPost('cid'), // <-- ตรวจสอบเลขบัตรประชาชน
-            'username'        => $this->request->getPost('username'),
-            'password'        => $this->request->getPost('password'),
-            'changwatcode'    => $this->request->getPost('changwatcode'),
-            'ampurcodefull'   => $this->request->getPost('ampurcodefull'),
-            'hospcode'        => $this->request->getPost('hospcode'), // <-- บันทึก hospcode
-            'villagecodefull' => $this->request->getPost('villagecodefull'), // <-- เพิ่มข้อมูลหมู่บ้าน
-            'status'          => 0, // 0 = รออนุมัติ
+            'fullname'     => $this->request->getPost('fullname'),
+            'position'     => $this->request->getPost('position'),
+            'cid'          => $this->request->getPost('cid'),
+            'username'     => $this->request->getPost('username'),
+            'password'     => $this->request->getPost('password'),
+            'hospcode'     => $this->request->getPost('hospcode'),
+            'status'       => 0 // 0 = รออนุมัติ
         ];
 
         // ตรวจสอบว่ามีข้อมูลจาก LINE ใน session หรือไม่
         if (session()->has('line_register_data')) {
             $lineData = session()->get('line_register_data');
             $data['line_user_id'] = $lineData['line_user_id'];
-            // ไม่ต้องตั้งรหัสผ่าน ถ้าสมัครผ่าน LINE (อาจจะให้ตั้งทีหลัง)
         }
+
         if ($userModel->save($data)) {
             log_activity('register', "สมัครสมาชิกใหม่ username: {$data['username']}");
-            session()->remove('line_register_data'); // ล้าง session หลังสมัครสำเร็จ
+            session()->remove('line_register_data');
             return redirect()->to('/login')->with('message', 'สมัครสมาชิกสำเร็จ! กรุณารอการอนุมัติ');
         }
+
         log_activity('register_fail', "สมัครสมาชิกไม่สำเร็จ username: {$data['username']}");
         return redirect()->back()->withInput()->with('error', 'เกิดข้อผิดพลาด');
     }
@@ -297,11 +290,8 @@ class AuthController extends Controller
             'user_id'       => $user['id'],
             'username'      => $user['username'],
             'fullname'      => $user['fullname'],
-            'changwatcode'  => $user['changwatcode'],   // <-- เพิ่ม
-            'ampurcodefull' => $user['ampurcodefull'],
-            'hospcode'      => $user['hospcode'],
-            'villagecode' => $user['villagecodefull'], // <-- เพิ่ม
             'roles'         => $roles,
+            'hospcode'      => $user['hospcode'],
             'isLoggedIn'    => true,
         ];
         session()->set($sessionData);
@@ -311,52 +301,23 @@ class AuthController extends Controller
     /**
      * ฟังก์ชันสำหรับ AJAX เพื่อดึงข้อมูลอำเภอ
      */
-    public function getAmphures()
-    {
-        log_activity('get_amphures', 'ajax ดึงข้อมูลอำเภอ');
-        $provinceCode = $this->request->getVar('province_code');
-        $campurModel = new CampurModel();
-        $amphures = $campurModel->where('changwatcode', $provinceCode)->orderBy('ampurname', 'ASC')->findAll();
-        return $this->response->setJSON($amphures);
-    }
+    
     public function getHospitals()
     {
-        log_activity('get_hospitals', 'ajax ดึงข้อมูลโรงพยาบาล');
-        $amphureCode = $this->request->getVar('amphurcode'); // รหัสอำเภอ 4 หลัก
-        if (strlen($amphureCode) !== 4) {
-            return $this->response->setJSON([]);
-        }
-        $provCode = substr($amphureCode, 0, 2);
-        $distCode = substr($amphureCode, 2, 2);
-
+        //log_activity('get_hospitals', 'ajax ดึงข้อมูลโรงพยาบาล');
+    
         $hospitalModel = new ChospitalModel();
         // ค้นหา รพ.สต. (hostype '07') และ สสช. (hostype '08')
-        $hospitals = $hospitalModel->where('provcode', $provCode)
-            ->where('distcode', $distCode)
-            ->whereIn('hostype', ['01', '02', '06', '07', '08', '13', '18'])
-            ->orderBy('hosname', 'ASC')
-            ->findAll();
+        $hospitals = $hospitalModel->findAll();
         return $this->response->setJSON($hospitals);
     }
 
-    // <-- อัปเดตฟังก์ชันดึงข้อมูลหมู่บ้าน ให้รับ hospcode แทน -->
-
-    // <-- ฟังก์ชันใหม่สำหรับดึงข้อมูลหมู่บ้าน -->
-    public function getVillages()
-    {
-        log_activity('get_villages', 'ajax ดึงข้อมูลหมู่บ้าน');
-        $hospcode = $this->request->getVar('hospcode');
-        $cvillageModel = new CvillageModel();
-        $villages = $cvillageModel->where('hospcode', $hospcode)->orderBy('villagename', 'ASC')->findAll();
-        return $this->response->setJSON($villages);
-    }
-    /**
-     * ทำการ Logout ออกจากระบบ
-     */
     public function logout()
     {
-        log_activity('logout', 'ออกจากระบบ');
+        $username = session()->get('username');
+        log_activity('logout', "ผู้ใช้ '{$username}' ออกจากระบบ");
+        
         session()->destroy();
-        return redirect()->to('login');
+        return redirect()->to('/login');
     }
 }

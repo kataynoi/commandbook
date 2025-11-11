@@ -40,10 +40,10 @@ class ReportModel extends Model
         } elseif (!empty($amphurCode)) {
             // Group by hospital
             $groupBy = 'p.hospcode';
-            $selectArea = 'h.hosname as area_name';
-            $groupByArea = 'h.hosname';
+            $selectArea = 'h.hospname as area_name';
+            $groupByArea = 'h.hospname';
             $joinTable = 'chospital h';
-            $joinCondition = 'p.hospcode = h.hoscode';
+            $joinCondition = 'p.hospcode = h.hospcode';
         } else {
             // Group by amphur
             $groupBy = 'p.ampurcodefull';
@@ -67,7 +67,7 @@ class ReportModel extends Model
 
         // If we grouped by village but need hospital name for filtering/join, join hospital as well
         if (!empty($hospCode) && strpos($joinTable, 'cvillage') !== false) {
-            $builder->join('chospital h', 'v.hospcode = h.hoscode', 'left');
+            $builder->join('chospital h', 'v.hospcode = h.hospcode', 'left');
         }
 
         // Always filter by province if provided
@@ -105,10 +105,10 @@ class ReportModel extends Model
             case 'hospcode':
                 // แก้ไขการ join กับตาราง chospital ผ่าน village
                 $builder->join('village v', 'v.VID = p.villagecode', 'left');
-                $builder->join('chospital h', 'h.hoscode = v.HOSPCODE', 'left');
-                $areaField = 'h.hoscode';
-                $areaNameField = 'h.hosname';
-                $groupByFields = ['h.hoscode', 'h.hosname'];
+                $builder->join('chospital h', 'h.hospcode = v.HOSPCODE', 'left');
+                $areaField = 'h.hospcode';
+                $areaNameField = 'h.hospname';
+                $groupByFields = ['h.hospcode', 'h.hospname'];
                 if (!empty($filters['amphurCode'])) {
                     $builder->where('p.ampurcodefull', $filters['amphurCode']);
                 }

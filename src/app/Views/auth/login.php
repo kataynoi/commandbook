@@ -12,7 +12,7 @@
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-    <title>เข้าสู่ระบบ - SMIV CARE</title>
+    <title>เข้าสู่ระบบ - หนังสือคำสั่ง สสจ.มหาสารคาม</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -40,7 +40,7 @@
             <div class="col-lg-5 col-md-8">
                 <div class="card shadow-lg border-0 rounded-lg mt-5">
                     <div class="card-header bg-primary text-white">
-                        <h3 class="text-center font-weight-light my-4">SMIV CARE</h3>
+                        <h3 class="text-center font-weight-light my-4">Command Book</h3>
                     </div>
                     <div class="card-body p-4">
 

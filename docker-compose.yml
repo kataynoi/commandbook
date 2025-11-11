@@ -1,3 +1,4 @@
+version: '3.8'
 services:
   # 1. บริการ Nginx (เว็บเซิร์ฟเวอร์)
   nginx:
@@ -16,7 +17,8 @@ services:
   # 2. บริการ PHP
   php:
     build:
-      context: ./docker/php
+      context: .
+      dockerfile: docker/php/Dockerfile
     container_name: command-php
     volumes:
       - ./src:/var/www/html

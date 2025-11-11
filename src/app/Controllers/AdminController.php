@@ -6,12 +6,28 @@ use App\Models\UserModel;
 use App\Models\RoleModel;
 use App\Models\UserRoleModel;
 use App\Models\CchangwatModel;
+use App\Models\ChospitalModel;
+use App\Models\SettingsModel;
 
 class AdminController extends BaseController
 {
     /**
      * แสดงหน้าหลักสำหรับอนุมัติผู้ใช้
      */
+    public function getHospitals()
+    {
+        $settingsModel = new SettingsModel();
+        $chospitalModel = new ChospitalModel();
+        
+        $default_province = $settingsModel->get('system_province_code');
+        
+        $hospitals = $chospitalModel->where('provcode', $default_province)
+            ->orderBy('hospname', 'ASC')
+            ->findAll();
+            
+        return $this->response->setJSON($hospitals);
+    }
+
     public function manageUsers()
     {
         $session = session();
@@ -44,10 +60,10 @@ class AdminController extends BaseController
 
         // Query Builder เพื่อดึงข้อมูลผู้ใช้พร้อมกับรายชื่อสิทธิ์ (Roles) ของพวกเขา
         $builder = $userModel
-            ->select("users.id,users.status,users.fullname,users.position,chospital.hosname, GROUP_CONCAT(roles.role_name SEPARATOR ', ') as roles_list")
+            ->select("users.id,users.status,users.fullname,users.position,chospital.hospname, GROUP_CONCAT(roles.role_name SEPARATOR ', ') as roles_list")
             ->join('user_roles', 'user_roles.user_id = users.id', 'left')
             ->join('roles', 'roles.id = user_roles.role_id', 'left')
-            ->join('chospital', 'users.hospcode = chospital.hoscode', 'left')
+            ->join('chospital', 'users.hospcode = chospital.hospcode', 'left')
             ->groupBy('users.id');
 
         // --- Logic การกรองข้อมูลตามสิทธิ์ ---
@@ -106,10 +122,7 @@ class AdminController extends BaseController
             'position'        => $user['position'],
             'status'          => $user['status'],
             'roles'           => $userRoles,
-            'changwatcode'    => $user['changwatcode'],
-            'ampurcodefull'   => $user['ampurcodefull'],
-            'hospcode'        => $user['hospcode'],
-            'villagecodefull' => $user['villagecodefull'],
+            'hospcode'        => $user['hospcode']
         ];
 
         return $this->response->setJSON($data);
@@ -175,31 +188,70 @@ public function approveUser()
             'user_id'         => 'required|is_not_unique[users.id]',
             'fullname'        => 'required|min_length[3]|max_length[150]',
             'position'        => 'required|max_length[100]',
-            'changwatcode'    => 'required|exact_length[2]',
-            'ampurcodefull'   => 'required|exact_length[4]',
             'hospcode'        => 'permit_empty|exact_length[5]',
-            'villagecodefull' => 'permit_empty|exact_length[8]'
+            'status'         => 'required|in_list[0,1,2,3]',  // Changed to required and ensure it's 0 or 1
         ];
         if (!$this->validate($rules)) {
             return $this->response->setStatusCode(400)->setJSON(['error' => $this->validator->getErrors()]);
         }
         
+        $userModel = new UserModel();
+        $userRoleModel = new UserRoleModel();
+        
+        // Prepare user data
+        // Ensure status is properly formatted as integer
+        $status = $this->request->getPost('status');
+        $status = is_null($status) ? '1' : (string) $status; // Default to '1' if null
+        
         $dataToUpdate = [
             'fullname'        => $this->request->getPost('fullname'),
             'position'        => $this->request->getPost('position'),
-            'changwatcode'    => $this->request->getPost('changwatcode'),
-            'ampurcodefull'   => $this->request->getPost('ampurcodefull'),
             'hospcode'        => $this->request->getPost('hospcode'),
-            'villagecodefull' => $this->request->getPost('villagecodefull'),
+            'status'         => $status,
         ];
-        
-        $userModel = new UserModel();
-        if ($userModel->update($userId, $dataToUpdate)) {
-            log_activity('update_user', "แก้ไขข้อมูลผู้ใช้ ID: {$userId}", $userId);
-            return $this->response->setJSON(['success' => 'User details updated successfully.']);
-        }
 
-        return $this->response->setStatusCode(500)->setJSON(['error' => 'Failed to update user.']);
+        $db = \Config\Database::connect();
+        $db->transStart();
+        
+        try {
+            // Update user details
+            $userModel = new UserModel();
+            $userModel->update($userId, $dataToUpdate);
+            
+            // Update user roles
+            $userRoleModel = new UserRoleModel();
+            
+            // Delete existing roles
+            $userRoleModel->where('user_id', $userId)->delete();
+            
+            // Add new roles
+            $roles = $this->request->getPost('roles');
+            if (is_array($roles)) {
+                foreach ($roles as $roleId) {
+                    $userRoleModel->insert([
+                        'user_id' => $userId,
+                        'role_id' => $roleId
+                    ]);
+                }
+            }
+            
+            $db->transComplete();
+            
+            if ($db->transStatus() === false) {
+                return $this->response->setStatusCode(500)
+                    ->setJSON(['error' => 'Failed to update user and roles.']);
+            }
+            
+            log_activity('update_user', "แก้ไขข้อมูลและสิทธิ์ผู้ใช้ ID: {$userId}", $userId);
+            return $this->response->setJSON([
+                'success' => 'User details and roles updated successfully.'
+            ]);
+            
+        } catch (\Exception $e) {
+            $db->transRollback();
+            return $this->response->setStatusCode(500)
+                ->setJSON(['error' => 'An error occurred while updating the user.']);
+        }
     }
 
     /**

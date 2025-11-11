@@ -91,7 +91,7 @@ class ReportController extends BaseController
         $hospitals = $hospitalModel->where('provcode', $provCode)
                                    ->where('distcode', $distCode)
                                    ->whereIn('hostype', ['07', '08', '18']) 
-                                   ->orderBy('hosname', 'ASC')
+                                   ->orderBy('hospname', 'ASC')
                                    ->findAll();
         
         return $this->response->setJSON($hospitals);

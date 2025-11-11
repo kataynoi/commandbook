@@ -32,65 +32,20 @@
     </div>
 </div>
 
-<!-- [Modal ใหม่] Approve User Modal -->
-<div class="modal fade" id="approveUserModal" tabindex="-1" aria-labelledby="approveUserModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="approveUserModalLabel">อนุมัติและกำหนดสิทธิ์</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form id="approveUserForm">
-                <div class="modal-body">
-                    <?= csrf_field() ?>
-                    <input type="hidden" name="user_id" id="approve_user_id">
-                    <p>ผู้ใช้: <strong id="approve_user_fullname"></strong></p>
-                    
-                    <div class="mb-3">
-                        <label for="approve_status" class="form-label">สถานะ</label>
-                        <select class="form-select" id="approve_status" name="status" required>
-                            <option value="1">อนุมัติ</option>
-                            <option value="0">รออนุมัติ</option>
-                            <option value="2">ระงับการใช้งาน</option>
-                            <option value="3">ปฏิเสธ</option>
-                        </select>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">สิทธิ์การใช้งาน (Roles)</label>
-                        <div id="approve_roles_container">
-                            <?php foreach ($all_roles as $role): ?>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name="roles[]" value="<?= $role['id'] ?>" id="approve_role_<?= $role['id'] ?>">
-                                    <label class="form-check-label" for="approve_role_<?= $role['id'] ?>"><?= esc($role['role_name']) ?></label>
-                                </div>
-                            <?php endforeach; ?>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ปิด</button>
-                    <button type="submit" class="btn btn-success">บันทึก</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-
-<!-- [Modal เดิม ปรับปรุง] Edit User Modal -->
-<div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
+<!-- Modal จัดการข้อมูลผู้ใช้ -->
+<div class="modal fade" id="userManageModal" tabindex="-1" aria-labelledby="userManageModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="editUserModalLabel">แก้ไขข้อมูลผู้ใช้งาน</h5>
+                <h5 class="modal-title" id="userManageModalLabel">จัดการข้อมูลผู้ใช้</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form id="editUserForm">
+            <form id="userManageForm">
                 <div class="modal-body">
                     <?= csrf_field() ?>
-                    <input type="hidden" name="user_id" id="edit_user_id">
+                    <input type="hidden" name="user_id" id="user_id">
                     
+                    <!-- ข้อมูลผู้ใช้ -->
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label for="edit_fullname" class="form-label">ชื่อ-สกุล</label>
@@ -102,36 +57,45 @@
                         </div>
                     </div>
 
-                    <hr>
-                    <p class="text-muted">แก้ไขพื้นที่สังกัด</p>
-                    
+                    <!-- หน่วยบริการสังกัด -->
                     <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="edit_changwatcode" class="form-label">จังหวัด</label>
-                            <select class="form-select" id="edit_changwatcode" name="changwatcode" required>
-                                <!-- Options will be loaded by JS -->
+                        <div class="col-md-12 mb-3">
+                            <label for="edit_hospcode" class="form-label">หน่วยบริการ</label>
+                            <select class="form-select" id="edit_hospcode" name="hospcode" required>
+                                <option value="">-- เลือกหน่วยบริการ --</option>
                             </select>
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="edit_ampurcodefull" class="form-label">อำเภอ</label>
-                            <select class="form-select" id="edit_ampurcodefull" name="ampurcodefull" required disabled>
-                                <option value="">-- เลือกจังหวัดก่อน --</option>
+                    </div>
+
+                    <hr>
+
+                    <!-- สถานะและสิทธิ์การใช้งาน -->
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <label for="user_status" class="form-label">สถานะ</label>
+                            <select class="form-select" id="user_status" name="status" required>
+                                <option value="1">อนุมัติ</option>
+                                <option value="0">รออนุมัติ</option>
+                                <option value="2">ระงับการใช้งาน</option>
+                                <option value="3">ปฏิเสธ</option>
                             </select>
                         </div>
                     </div>
 
                     <div class="row">
-                         <div class="col-md-6 mb-3">
-                            <label for="edit_hospcode" class="form-label">รพ.สต.</label>
-                            <select class="form-select" id="edit_hospcode" name="hospcode" disabled>
-                                <option value="">-- เลือกอำเภอก่อน --</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="edit_villagecodefull" class="form-label">หมู่บ้าน</label>
-                            <select class="form-select" id="edit_villagecodefull" name="villagecodefull" disabled>
-                                 <option value="">-- เลือก รพ.สต. ก่อน --</option>
-                            </select>
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label">สิทธิ์การใช้งาน (Roles)</label>
+                            <div id="roles_container">
+                                <?php foreach ($all_roles as $role): ?>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="roles[]" 
+                                               value="<?= $role['id'] ?>" id="role_<?= $role['id'] ?>">
+                                        <label class="form-check-label" for="role_<?= $role['id'] ?>">
+                                            <?= esc($role['role_name']) ?>
+                                        </label>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -179,8 +143,8 @@ function loadDropdown(elementId, url, data, placeholder, selectedValue = null, c
                     text = item.ampurname;
                     break;
                 case 'edit_hospcode':
-                    value = item.hoscode;
-                    text = item.hosname;
+                    value = item.hospcode;
+                    text = item.hospname;
                     break;
                 case 'edit_villagecodefull':
                     value = item.villagecodefull;
@@ -222,8 +186,8 @@ $(document).ready(function() {
                     if (row.ampurname) {
                         affiliation.push(row.ampurname);
                     }
-                    if (row.hosname) {  // เพิ่มการแสดง hosname
-                        affiliation.push(row.hosname);
+                    if (row.hospname) {  // เพิ่มการแสดง hospname
+                        affiliation.push(row.hospname);
                     }
                     return affiliation.join(' / ') || '-';
                 }
@@ -244,11 +208,8 @@ $(document).ready(function() {
                 orderable: false,
                 render: function(data, type, row) {
                     return `
-                        <button class="btn btn-success btn-sm approve-btn" data-id="${row.id}" title="อนุมัติ/กำหนดสิทธิ์">
-                            <i class="fas fa-check-circle"></i>
-                        </button>
-                        <button class="btn btn-warning btn-sm edit-btn" data-id="${row.id}" title="แก้ไขข้อมูล">
-                            <i class="fas fa-edit"></i>
+                        <button class="btn btn-primary btn-sm edit-btn" data-id="${row.id}" title="จัดการข้อมูลผู้ใช้">
+                            <i class="fas fa-edit"></i> จัดการ
                         </button>
                     `;
                 }
@@ -258,152 +219,42 @@ $(document).ready(function() {
 
     // === Event Handlers for Buttons ===
     
-    // 1. Approve Button Click
-    $('#usersTable').on('click', '.approve-btn', function() {
+    // Handle both Approve and Edit button clicks
+    $('#usersTable').on('click', '.approve-btn, .edit-btn', function() {
         const userId = $(this).data('id');
         $.get(`<?= site_url('admin/users/get-details/') ?>${userId}`, function(data) {
-            $('#approve_user_id').val(data.id);
-            $('#approve_user_fullname').text(data.fullname);
-            $('#approve_status').val(data.status);
-            
-            // Reset and set roles
-            $('#approveUserForm input[name="roles[]"]').prop('checked', false);
-            data.roles.forEach(roleId => {
-                $(`#approve_role_${roleId}`).prop('checked', true);
-            });
-
-            new bootstrap.Modal(document.getElementById('approveUserModal')).show();
-        });
-    });
-
-    // 2. Edit Button Click
-    $('#usersTable').on('click', '.edit-btn', function() {
-        const userId = $(this).data('id');
-        $.get(`<?= site_url('admin/users/get-details/') ?>${userId}`, function(data) {
-            $('#edit_user_id').val(data.id);
+            // Fill in the form fields
+            $('#user_id').val(data.id);
             $('#edit_fullname').val(data.fullname);
             $('#edit_position').val(data.position);
+            $('#user_status').val(data.status);
             
-            // Load Province Dropdown
-            loadDropdown(
-                'edit_changwatcode',
-                '<?= site_url('ajax/get-provinces') ?>',
-                {},
-                '-- เลือกจังหวัด --',
-                data.changwatcode,
-                function() {
-                    if (data.changwatcode) {
-                        // Load Amphur Dropdown
-                        loadDropdown(
-                            'edit_ampurcodefull',
-                            '<?= site_url('ajax/get-amphures') ?>',
-                            { province_code: data.changwatcode },
-                            '-- เลือกอำเภอ --',
-                            data.ampurcodefull,
-                            function() {
-                                if (data.ampurcodefull) {
-                                    // Load Hospital Dropdown
-                                    loadDropdown(
-                                        'edit_hospcode',
-                                        '<?= site_url('ajax/get-hospitals') ?>',
-                                        { amphurcode: data.ampurcodefull },
-                                        '-- เลือก รพ.สต. --',
-                                        data.hospcode,
-                                        function() {
-                                            if (data.hospcode) {
-                                                // Load Village Dropdown
-                                                loadDropdown(
-                                                    'edit_villagecodefull',
-                                                    '<?= site_url('ajax/get-villages') ?>',
-                                                    { hospcode: data.hospcode },
-                                                    '-- เลือกหมู่บ้าน --',
-                                                    data.villagecodefull
-                                                );
-                                            }
-                                        }
-                                    );
-                                }
-                            }
-                        );
-                    }
-                }
-            );
-
-            new bootstrap.Modal(document.getElementById('editUserModal')).show();
-        });
-    });
-
-    // Cascade dropdowns on user interaction
-    $('#edit_changwatcode').on('change', function() {
-        const provinceCode = $(this).val();
-        // Reset dependent dropdowns
-        $('#edit_ampurcodefull').html('<option value="">-- เลือกอำเภอ --</option>').prop('disabled', !provinceCode);
-        $('#edit_hospcode').html('<option value="">-- เลือก รพ.สต. --</option>').prop('disabled', true);
-        $('#edit_villagecodefull').html('<option value="">-- เลือกหมู่บ้าน --</option>').prop('disabled', true);
-        
-        if (provinceCode) {
-            loadDropdown(
-                'edit_ampurcodefull',
-                '<?= site_url('ajax/get-amphures') ?>',
-                { province_code: provinceCode },
-                '-- เลือกอำเภอ --'
-            );
-        }
-    });
-
-    $('#edit_ampurcodefull').on('change', function() {
-        const amphurCode = $(this).val();
-        // Reset dependent dropdowns
-        $('#edit_hospcode').html('<option value="">-- เลือก รพ.สต. --</option>').prop('disabled', !amphurCode);
-        $('#edit_villagecodefull').html('<option value="">-- เลือกหมู่บ้าน --</option>').prop('disabled', true);
-        
-        if (amphurCode) {
+            // Reset and set roles
+            $('#userManageForm input[name="roles[]"]').prop('checked', false);
+            data.roles.forEach(roleId => {
+                $(`#role_${roleId}`).prop('checked', true);
+            });
+            
+            // Load Hospitals Dropdown
             loadDropdown(
                 'edit_hospcode',
                 '<?= site_url('ajax/get-hospitals') ?>',
-                { amphurcode: amphurCode },
-                '-- เลือก รพ.สต. --'
+                {},
+                '-- เลือกหน่วยบริการ --',
+                data.hospcode
             );
-        }
-    });
 
-    $('#edit_hospcode').on('change', function() {
-        const hospCode = $(this).val();
-        // Reset dependent dropdown
-        $('#edit_villagecodefull').html('<option value="">-- เลือกหมู่บ้าน --</option>').prop('disabled', !hospCode);
-        
-        if (hospCode) {
-            loadDropdown(
-                'edit_villagecodefull',
-                '<?= site_url('ajax/get-villages') ?>',
-                { hospcode: hospCode },
-                '-- เลือกหมู่บ้าน --'
-            );
-        }
-    });
-
-    // === Form Submissions ===
-
-    // 1. Approve Form Submit
-    $('#approveUserForm').on('submit', function(e) {
-        e.preventDefault();
-        const formData = $(this).serialize();
-        $.post("<?= site_url('admin/users/approve') ?>", formData, function(response) {
-            Swal.fire('สำเร็จ!', 'อัปเดตสถานะและสิทธิ์เรียบร้อย', 'success');
-            $('#approveUserModal').modal('hide');
-            $('#usersTable').DataTable().ajax.reload();
-        }).fail(function() {
-            Swal.fire('ผิดพลาด!', 'ไม่สามารถบันทึกข้อมูลได้', 'error');
+            new bootstrap.Modal(document.getElementById('userManageModal')).show();
         });
     });
-    
-    // 2. Edit Form Submit
-    $('#editUserForm').on('submit', function(e) {
+
+    // === Form Submission ===
+    $('#userManageForm').on('submit', function(e) {
         e.preventDefault();
         const formData = $(this).serialize();
         $.post("<?= site_url('admin/users/update') ?>", formData, function(response) {
-            Swal.fire('สำเร็จ!', 'แก้ไขข้อมูลผู้ใช้เรียบร้อย', 'success');
-            $('#editUserModal').modal('hide');
+            Swal.fire('สำเร็จ!', 'บันทึกการเปลี่ยนแปลงเรียบร้อย', 'success');
+            $('#userManageModal').modal('hide');
             $('#usersTable').DataTable().ajax.reload();
         }).fail(function() {
             Swal.fire('ผิดพลาด!', 'ไม่สามารถบันทึกข้อมูลได้', 'error');
