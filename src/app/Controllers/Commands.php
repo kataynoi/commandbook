@@ -5,6 +5,8 @@ use App\Models\CommandAccessModel;
 use App\Models\ChospitalModel;
 use chillerlan\QRCode\QRCode;
 use chillerlan\QRCode\QROptions;
+use chillerlan\QRCode\Common\EccLevel; // <-- อย่าลืม import บรรทัดนี้
+use chillerlan\QRCode\Common\Version;
 
 
 class Commands extends BaseController
@@ -97,44 +99,6 @@ class Commands extends BaseController
         return $this->response->setJSON(['data' => $data]);
     }
 
-    /**
-     * คืนรายละเอียดเอกสาร (ใช้เมื่อคลิกชื่อแสดงรายละเอียด)
-     */
-    /*
-    public function get($id = null)
-    {
-        if (! session()->get('isLoggedIn')) {
-            return $this->response->setStatusCode(401)->setJSON(['error' => 'Unauthorized']);
-        }
-
-        // Ensure $id is available: accept it from parameter, route, query or POST
-        $id = $id ?? $this->request->getVar('id') ?? $this->request->getGet('id') ?? null;
-        if ($id === null) {
-            return $this->response->setStatusCode(400)->setJSON(['error' => 'Missing id']);
-        }
-
-        $doc = $this->docModel->find($id);
-        if (! $doc) {
-            return $this->response->setStatusCode(404)->setJSON(['error' => 'Not found']);
-        }
-
-        $roles = session()->get('roles') ?? [];
-        $isAdminOrUploader = in_array(1, $roles) || in_array(2, $roles);
-        if (! $isAdminOrUploader) {
-            $userHosp = session()->get('hospcode');
-            $has = $this->accessModel->where('command_id', $id)->where('hospcode', $userHosp)->first();
-            if (! $has) {
-                return $this->response->setStatusCode(403)->setJSON(['error' => 'Forbidden']);
-            }
-        }
-
-        return $this->response->setJSON($doc);
-    }
-    */
-
-    /**
-     * Get single document detail for modal view
-     */
     public function get($id = null)
     {
         if (! $this->request->isAJAX() || empty($id)) {
@@ -426,10 +390,10 @@ class Commands extends BaseController
 
             // ตั้งค่าสำหรับไลบรารี QR Code
             $options = new QROptions([
-                'version'      => 5, // ความซับซ้อนของ QR, 5 เพียงพอสำหรับ URL
+                'version'      => Version::AUTO, // ความซับซ้อนของ QR, 5 เพียงพอสำหรับ URL
                 'outputType'   => QRCode::OUTPUT_IMAGE_PNG,
                 'eccLevel'     => QRCode::ECC_L, // Error Correction Level
-                'scale'        => 10, // ขนาดของแต่ละจุด
+                'scale'        => 5, // ขนาดของแต่ละจุด
                 'imageBase64'  => false, // เราต้องการข้อมูลภาพดิบ ไม่ใช่ base64
             ]);
 
