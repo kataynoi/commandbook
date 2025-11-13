@@ -176,6 +176,13 @@ class Commands extends BaseController
      */
     public function delete($id = null)
     {
+        // Normalize id: accept parameter, POST or GET
+        $commandId = $id ?? $this->request->getPost('id') ?? $this->request->getGet('id') ?? null;
+
+        if (empty($commandId)) {
+            return $this->response->setStatusCode(400)->setJSON(['error' => 'Missing id']);
+        }
+
         if (! session()->get('isLoggedIn')) {
             return $this->response->setStatusCode(401)->setJSON(['error' => 'Unauthorized']);
         }
@@ -185,7 +192,7 @@ class Commands extends BaseController
             return $this->response->setStatusCode(403)->setJSON(['error' => 'Forbidden']);
         }
 
-        $doc = $this->docModel->find($id);
+        $doc = $this->docModel->find($commandId);
         if (! $doc) {
             return $this->response->setStatusCode(404)->setJSON(['error' => 'Not found']);
         }
@@ -195,9 +202,9 @@ class Commands extends BaseController
             @unlink(WRITEPATH . $doc['file_path']);
         }
 
-        if ($this->docModel->delete($id)) {
+        if ($this->docModel->delete($commandId)) {
             // ลบ access records ด้วย
-            $this->accessModel->where('command_id', $id)->delete();
+            $this->accessModel->where('command_id', $commandId)->delete();
             return $this->response->setJSON(['success' => true]);
         }
 

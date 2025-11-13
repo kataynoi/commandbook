@@ -27,21 +27,11 @@ $userRoles = session()->get('roles') ?? [];
             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
                 <li>
                     <?php
-                    if (in_array(1, $userRoles) || in_array(2, $userRoles) || in_array(3, $userRoles)):
+                    if (in_array(1, $userRoles) || in_array(2, $userRoles)):
                     ?>
                         <a class="dropdown-item" href="<?= base_url('/admin/manage-users') ?>">
                             <i class="fas fa-list fa-sm fa-fw mr-2 text-gray-400"></i>
                             ผู้ใช้งานทั้งหมด
-                        </a>
-                    <?php endif; ?>
-                </li>
-                <li>
-                    <?php
-                    if (in_array(3, $userRoles)):
-                    ?>
-                        <a class="dropdown-item" href="<?= base_url('/admin/user-approval') ?>">
-                            <i class="fas fa-list fa-sm fa-fw mr-2 text-gray-400"></i>
-                            อนุมัติผู้ใช้งาน
                         </a>
                     <?php endif; ?>
                 </li>
