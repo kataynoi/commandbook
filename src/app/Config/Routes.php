@@ -35,26 +35,6 @@ $routes->group('ajax', function ($routes) {
 });
 
 // --------------------------------------------------------------------
-// Patients (ต้องการการยืนยันตัวตน)
-// --------------------------------------------------------------------
-$routes->group('patients', ['filter' => 'auth'], function ($routes) {
-    $routes->get('/', 'PatientController::index');
-    $routes->get('fetch', 'PatientController::fetchPatients');
-    $routes->post('store', 'PatientController::store');
-    $routes->get('fetch-one/(:num)', 'PatientController::fetchSinglePatient/$1');
-    $routes->post('update', 'PatientController::update');
-    $routes->post('delete/(:num)', 'PatientController::delete/$1');
-
-    $routes->post('update-risk-level', 'PatientController::updateRiskLevel');
-
-    $routes->post('get-amphures', 'PatientController::getAmphures');
-    $routes->post('get-tambons', 'PatientController::getTambons');
-    $routes->post('get-villages', 'PatientController::getVillages');
-    $routes->get('search-person', 'PatientController::searchPerson');
-    $routes->get('check-existing', 'PatientController::checkExistingPatient');
-});
-
-// --------------------------------------------------------------------
 // Admin (ต้องการการยืนยันตัวตน)
 // --------------------------------------------------------------------
 $routes->group('admin', ['filter' => 'auth'], function ($routes) {
@@ -111,5 +91,4 @@ $routes->get('commands/get/(:num)', 'Commands::get/$1');    // get details
 $routes->post('commands/delete/(:num)', 'Commands::delete/$1'); // delete (POST)
 $routes->get('commands/qr/(:segment)', 'Commands::qr/$1');
 
-$routes->get('access/(:segment)', 'Download::file/$1');
 $routes->get('access/(:segment)', 'Access::index/$1');

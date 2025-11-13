@@ -36,102 +36,129 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    // --- DataTable Initialization ---
     const table = $('#commandsTable').DataTable({
         ajax: '<?= site_url('commands/fetch') ?>',
+        responsive: true,
+        pageLength: 10,
         columns: [
-            { data: null, render: (d, t, r, meta) => meta.row + 1 },
+            { data: null, render: (d, t, r, meta) => meta.row + 1, width: '5%' },
             { data: 'doc_number' },
-            { data: 'doc_title', render: (d, t, row) => `<a href="#" class="doc-title" data-id="${row.id}">${$('<div>').text(d||'-').html()}</a>` },
+            { data: 'doc_title', render: (d, t, row) => `<a href="#" class="doc-title" data-id="${row.id}" style="text-decoration: none;">${d || '-'}</a>` },
             { data: 'doc_date' },
             { data: 'uploader_name' },
-            { data: null, orderable:false, render: function(d, t, row){
-                // token fallback: qr_token || token || file_token
-                const token = row.qr_token || row.token || row.file_token || '';
-                const accessUrl = token ? '<?= base_url('access') ?>/' + encodeURIComponent(token) : '';
-                let actions = `<button class="btn btn-sm btn-info qr-btn me-1" data-url="${accessUrl}" data-token="${token}"><i class="bi bi-qr-code"></i> QR</button>`;
-                const roles = <?= json_encode(array_values((array) session()->get('roles'))) ?>;
-                if (roles.includes(1) || roles.includes(2)) {
-                    actions += ` <a class="btn btn-sm btn-warning" href="<?= site_url('commands/new') ?>?edit=${row.id}"><i class="bi bi-pencil"></i> แก้ไข</a>`;
-                    actions += ` <button class="btn btn-sm btn-danger delete-btn" data-id="${row.id}"><i class="bi bi-trash"></i> ลบ</button>`;
+            {
+                data: 'qr_token',
+                orderable: false,
+                render: function(data, type, row) {
+                    const token = row.qr_token || '';
+                    let actions = `<button class="btn btn-sm btn-info qr-btn" data-token="${token}"><i class="bi bi-qr-code"></i> QR</button>`;
+                    
+                    // Normalize roles from PHP session
+                    const rawRoles = <?= json_encode(session()->get('roles')) ?? '[]' ?>;
+                    // Ensure roles is always an array of numbers
+                    const roles = (Array.isArray(rawRoles) ? rawRoles : [rawRoles]).map(Number);
+
+                    // Add Edit and Delete buttons for roles 1 or 2
+                    if (roles.includes(1) || roles.includes(2)) {
+                        actions += ` <a class="btn btn-sm btn-warning" href="<?= site_url('commands/new') ?>?edit=${row.id}" title="แก้ไข"><i class="bi bi-pencil">แก้ไข</i></a>`;
+                        actions += ` <button class="btn btn-sm btn-danger delete-btn" data-id="${row.id}" title="ลบ"><i class="bi bi-trash"></i>ลบ</button>`;
+                    }
+                    return actions;
                 }
-                return actions;
-            }}
-        ],
-        pageLength: 10,
-        responsive: true
+            }
+        ]
     });
 
     // click title -> load detail (AJAX)
     $('#commandsTable').on('click', '.doc-title', function(e){
         e.preventDefault();
         const id = $(this).data('id');
-        fetch('<?= site_url('commands/get') ?>/' + id)
-            .then(r => r.json()).then(json => {
-                if (json.error) { alert(json.error); return; }
-                // แสดง modal แบบง่าย
-                let html = `<div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">${json.doc_title || '-'}</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><p><strong>เลขที่:</strong> ${json.doc_number||'-'}</p><p><strong>วันที่:</strong> ${json.doc_date||'-'}</p><p><strong>ผู้อัปโหลด:</strong> ${json.uploader_name||'-'}</p><div>${json.description||''}</div></div><div class="modal-footer"><a class="btn btn-success" href="<?= site_url('access') ?>/${encodeURIComponent(json.qr_token||'')}" target="_blank">ดาวน์โหลด</a><button class="btn btn-secondary" data-bs-dismiss="modal">ปิด</button></div></div></div>`;
-                $('#docDetailModal').html(html);
-                new bootstrap.Modal(document.getElementById('docDetailModal')).show();
-            }).catch(()=> alert('เกิดข้อผิดพลาด'));
+        
+        // เพิ่ม headers ใน fetch()
+        fetch('<?= site_url('commands/get') ?>/' + id, {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(r => {
+            if (!r.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return r.json();
+        })
+        .then(json => {
+            if (json.error) { 
+                Swal.fire('ข้อผิดพลาด', json.error, 'error'); 
+                return; 
+            }
+
+            // สร้าง HTML สำหรับ "คำขยายความ"
+            let descriptionHtml = json.description ? `<hr><p><strong>คำขยายความ:</strong></p><div>${json.description}</div>` : '';
+
+            // สร้าง HTML สำหรับ "รายชื่อหน่วยงาน"
+            let accessListHtml = '';
+            if (json.access_list && json.access_list.length > 0) {
+                const listItems = json.access_list.map(item => `<li>${item.hospname} (${item.hospcode})</li>`).join('');
+                accessListHtml = `<hr><p><strong>หน่วยงานที่รับหนังสือ:</strong></p><ul class="list-unstyled" style="max-height: 150px; overflow-y: auto; border: 1px solid #eee; padding: 10px; border-radius: 5px;">${listItems}</ul>`;
+            }
+
+            // รวม HTML ทั้งหมดเพื่อแสดงใน Modal
+            let html = `<div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">${json.doc_title || '-'}</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><p><strong>เลขที่:</strong> ${json.doc_number||'-'}</p><p><strong>วันที่:</strong> ${json.doc_date||'-'}</p><p><strong>ผู้อัปโหลด:</strong> ${json.uploader_name||'-'}</p>${descriptionHtml}${accessListHtml}</div><div class="modal-footer"><a class="btn btn-success" href="<?= site_url('access') ?>/${encodeURIComponent(json.qr_token||'')}" target="_blank">ดาวน์โหลด</a><button class="btn btn-secondary" data-bs-dismiss="modal">ปิด</button></div></div></div>`;
+            
+            $('#docDetailModal').html(html);
+            new bootstrap.Modal(document.getElementById('docDetailModal')).show();
+        }).catch(()=> Swal.fire('ข้อผิดพลาด', 'ไม่สามารถโหลดข้อมูลได้', 'error'));
     });
 
-    // QR button — อ่าน data-url; ถ้าไม่มี token แจ้งผู้ใช้
-    $('#commandsTable').on('click', '.qr-btn', function(){
-        const token = $(this).data('token') || '';
-        const accessUrl = $(this).data('url') || ''; // direct access link (for open)
-        console.log('QR button clicked', { token, accessUrl });
-
-        if (! token) {
-            Swal.fire({
-                icon: 'warning',
-                title: 'ไม่พบ QR Token',
-                text: 'ไม่พบข้อมูลสำหรับสร้าง QR Code ของเอกสารนี้'
-            });
+    // --- QR Button Click Handler ---
+    $('#commandsTable').on('click', '.qr-btn', function() {
+        const token = $(this).data('token');
+        if (!token) {
+            Swal.fire('ข้อผิดพลาด', 'ไม่พบ QR Token สำหรับเอกสารนี้', 'error');
             return;
         }
-
-        // เปลี่ยนให้ใช้ endpoint ภายในเซิร์ฟเวอร์ ที่จะ redirect ไปยัง Google Charts
-        const qrSrc = '<?= site_url('commands/qr') ?>/' + encodeURIComponent(token);
-
+        const qrSrc = `<?= site_url('commands/qr/') ?>${token}`;
         const modalHtml = `
           <div class="modal-dialog modal-sm">
             <div class="modal-content">
-              <div class="modal-header">
-                <h5 class="modal-title">QR Code</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-              </div>
-              <div class="modal-body text-center">
-                <img id="qrImg" src="${qrSrc}" class="img-fluid" alt="QR Code">
-                <p class="mt-2"><a id="qrOpenLink" href="${accessUrl}" target="_blank">เปิดลิงก์</a></p>
-              </div>
+              <div class="modal-header"><h5 class="modal-title">QR Code</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+              <div class="modal-body text-center"><img id="qrImg" src="${qrSrc}" class="img-fluid" alt="QR Code" style="min-height: 250px;"></div>
             </div>
-          </div>
-        `;
-
-        $('#qrModal').html(modalHtml);
-        const modalEl = document.getElementById('qrModal');
-        new bootstrap.Modal(modalEl).show();
-
-        const img = document.getElementById('qrImg');
-        img.onerror = function() {
-            console.warn('QR image failed to load:', qrSrc);
-            this.style.display = 'none';
-            const link = document.getElementById('qrOpenLink');
-            if (link) {
-                link.insertAdjacentHTML('beforebegin', '<p class="text-danger">ไม่สามารถแสดงภาพ QR ได้ — โปรดใช้ลิงก์ด้านล่าง</p>');
-            }
-        };
+          </div>`;
+        $('#qrModal').html(modalHtml).modal('show');
     });
 
-    // delete
+    // --- Delete Button Click Handler ---
     $('#commandsTable').on('click', '.delete-btn', function(){
-        if (!confirm('ต้องการลบเอกสารนี้หรือไม่?')) return;
         const id = $(this).data('id');
-        fetch('<?= site_url('commands/delete') ?>/' + id, { method: 'POST', headers: {'X-Requested-With': 'XMLHttpRequest'} })
-            .then(r=>r.json()).then(res=>{
-                if (res.success) table.ajax.reload(null,false);
-                else alert(res.error || 'ลบไม่สำเร็จ');
-            }).catch(()=> alert('เกิดข้อผิดพลาด'));
+        Swal.fire({
+            title: 'ต้องการลบเอกสารนี้?',
+            text: "การกระทำนี้ไม่สามารถย้อนกลับได้!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'ใช่, ลบเลย!',
+            cancelButtonText: 'ยกเลิก'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch('<?= site_url('commands/delete') ?>/' + id, { 
+                    method: 'POST', 
+                    headers: {'X-Requested-With': 'XMLHttpRequest'} 
+                })
+                .then(r => r.json())
+                .then(res => {
+                    if (res.success) {
+                        Swal.fire('ลบแล้ว!', 'เอกสารถูกลบเรียบร้อย', 'success');
+                        table.ajax.reload(null, false); // Reload table without resetting page
+                    } else {
+                        Swal.fire('ข้อผิดพลาด', res.error || 'ไม่สามารถลบเอกสารได้', 'error');
+                    }
+                }).catch(() => Swal.fire('ข้อผิดพลาด', 'เกิดปัญหาในการเชื่อมต่อ', 'error'));
+            }
+        });
     });
 });
 </script>

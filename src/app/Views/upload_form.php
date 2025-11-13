@@ -2,44 +2,33 @@
 <?= $this->section('content') ?>
 
 <div class="container mt-4">
-    <h3><i class="bi bi-file-earmark-arrow-up"></i> อัปโหลดหนังสือคำสั่ง</h3>
-    
-    <?php
-    $errors = session()->getFlashdata('errors');
-    if ($errors) :
-        if (is_array($errors)) :
-            foreach ($errors as $err) : ?>
-                <div class="alert alert-danger"><?= esc($err) ?></div>
-            <?php endforeach;
-        else: ?>
-            <div class="alert alert-danger"><?= esc($errors) ?></div>
-        <?php endif;
-    endif;
-    ?>
-
-    <?php if(session()->getFlashdata('error')): ?>
-        <div class="alert alert-danger">
-            <?= session()->getFlashdata('error') ?>
-        </div>
-    <?php endif; ?>
-
+    <h3><?= isset($doc['id']) ? 'แก้ไขเอกสาร' : 'อัปโหลดเอกสารใหม่' ?></h3>
+    <hr>
     <form action="<?= site_url('commands/save') ?>" method="post" enctype="multipart/form-data">
         <?= csrf_field() ?>
         
+        <!-- เพิ่ม Hidden Field สำหรับ ID -->
+        <input type="hidden" name="id" value="<?= esc($doc['id'] ?? '') ?>">
+
         <div class="row">
             <div class="col-md-6 mb-3">
                 <label for="doc_number" class="form-label">เลขหนังสือคำสั่ง</label>
-                <input type="text" class="form-control" id="doc_number" name="doc_number" value="<?= esc(old('doc_number')) ?>" required>
+                <input type="text" class="form-control" id="doc_number" name="doc_number" value="<?= esc(old('doc_number', $doc['doc_number'] ?? '')) ?>" required>
             </div>
             <div class="col-md-6 mb-3">
                 <label for="doc_date" class="form-label">วันที่ออกคำสั่ง</label>
-                <input type="date" class="form-control" id="doc_date" name="doc_date" value="<?= esc(old('doc_date')) ?>" required>
+                <input type="date" class="form-control" id="doc_date" name="doc_date" value="<?= esc(old('doc_date', $doc['doc_date'] ?? ''))?>" required>
             </div>
         </div>
         
         <div class="mb-3">
             <label for="doc_title" class="form-label">ชื่อเรื่อง</label>
-            <input type="text" class="form-control" id="doc_title" name="doc_title" value="<?= esc(old('doc_title')) ?>" required>
+            <input type="text" class="form-control" id="doc_title" name="doc_title" value="<?= esc(old('doc_title', $doc['doc_title'] ?? '')) ?>" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="description" class="form-label">คำขยายความ (ถ้ามี)</label>
+            <textarea class="form-control" id="description" name="description" rows="3"><?= esc(old('description', $doc['description'] ?? '')) ?></textarea>
         </div>
 
         <div class="mb-3">
@@ -49,7 +38,7 @@
 
         <div class="mb-3">
             <label for="hospcodes" class="form-label">กำหนดสิทธิ์การเข้าถึง (เลือกได้หลายหน่วยงาน)</label>
-            <select class="form-select" id="hospcodes" name="hospcodes[]" multiple size="10" required>
+            <select class="form-select" id="hospcodes" name="hospcodes[]" multiple size="26" required>
                 <?php
                     // ถ้า controller ส่ง $hospitals มาให้ ให้วนแสดงค่าจาก DB
                     $selected = old('hospcodes') ?? [];

@@ -24,7 +24,7 @@ class AuthController extends Controller
     {
         // ถ้าผู้ใช้ Login อยู่แล้ว ให้ redirect ไปหน้า dashboard
         if (session()->get('isLoggedIn')) {
-            return redirect()->to('dashboard');
+            return redirect()->to('/');
         }
 
         helper(['form']);
@@ -106,7 +106,7 @@ class AuthController extends Controller
         log_activity('login', "ผู้ใช้ '{$user['username']}' เข้าสู่ระบบสำเร็จ");
 
         // 5. ส่งไปหน้า Dashboard
-        return redirect()->to('/dashboard');
+        return redirect()->to('/');
     }
 
     /**
@@ -261,7 +261,7 @@ class AuthController extends Controller
                     return redirect()->to('/login')->with('error', 'บัญชีของคุณยังไม่ได้รับการอนุมัติหรือถูกระงับ');
                 }
                 $this->createUserSession($user);
-                return redirect()->to('/dashboard');
+                return redirect()->to('/');
             } else {
                 // --- กรณีผู้ใช้ใหม่: ส่งไปหน้าลงทะเบียน ---
                 $lineData = [

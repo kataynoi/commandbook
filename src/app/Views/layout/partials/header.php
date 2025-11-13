@@ -25,8 +25,6 @@ $userRoles = session()->get('roles') ?? [];
             </a>
 
             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
-                <li><a class="dropdown-item" href="#!">Settings</a></li>
-                <li><a class="dropdown-item" href="#!">Activity Log</a></li>
                 <li>
                     <?php
                     if (in_array(1, $userRoles) || in_array(2, $userRoles) || in_array(3, $userRoles)):
