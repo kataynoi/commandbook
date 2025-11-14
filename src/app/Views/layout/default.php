@@ -32,7 +32,7 @@
                     <div class="d-flex align-items-center justify-content-between small">
                         <div class="text-muted">Copyright &copy; Your Website 2023</div>
                         <div>
-                            <a href="#">Privacy Policy</a>
+                            <a href="<?= site_url('privacy-policy') ?>">Privacy Policy</a>
                             &middot;
                             <span>Copyright &copy; Dechachit@mkho.moph.go.th 2025</span>
                         </div>

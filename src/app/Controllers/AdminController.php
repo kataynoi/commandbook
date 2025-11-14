@@ -31,13 +31,21 @@ class AdminController extends BaseController
     public function manageUsers()
     {
         $session = session();
-        $userRole = $session->get('roles');
+        $userRole = $session->get('roles') ?? [];
         // โหลดข้อมูล Roles ทั้งหมดเพื่อส่งไปให้ Modal ใช้สร้าง Checkbox
         $cchangwatModel = new CchangwatModel();
         $provinces = $cchangwatModel->orderBy('changwatname', 'ASC')->findAll();
 
         $roleModel = new RoleModel();
         $query = $roleModel->orderBy('id', 'ASC');
+
+        // --- เพิ่ม Logic การกรอง Roles ---
+        // ถ้าผู้ใช้ที่ login อยู่ ไม่ใช่ Super Admin (role 1)
+        if (!in_array(1, $userRole)) {
+            // ไม่ต้องแสดง role "Admin" (id=1) ในรายการที่สามารถเลือกได้
+            $query->where('id !=', 1);
+        }
+        
         if (in_array(3, $userRole)) {
             // ถ้าใช่, ให้เพิ่มเงื่อนไข "ไม่เอา id 1 และ 2" เข้าไป
             $query->whereNotIn('id', [1, 2, 7]);
@@ -57,6 +65,8 @@ class AdminController extends BaseController
     public function fetchUsers()
     {
         $userModel = new UserModel();
+        $session = session();
+        $userRole = $session->get('roles') ?? [];
 
         // Query Builder เพื่อดึงข้อมูลผู้ใช้พร้อมกับรายชื่อสิทธิ์ (Roles) ของพวกเขา
         $builder = $userModel
@@ -65,6 +75,14 @@ class AdminController extends BaseController
             ->join('roles', 'roles.id = user_roles.role_id', 'left')
             ->join('chospital', 'users.hospcode = chospital.hospcode', 'left')
             ->groupBy('users.id');
+
+        // --- เพิ่ม Logic การกรองข้อมูลตามสิทธิ์ ---
+        // ถ้าผู้ใช้ที่ login อยู่ ไม่ใช่ Super Admin (role 1)
+        if (!in_array(1, $userRole)) {
+            // ให้ซ่อนผู้ใช้ทั้งหมดที่มี role เป็น Super Admin (id=1)
+            $subQuery = $this->db->table('user_roles')->select('user_id')->where('role_id', 1);
+            $builder->whereNotIn('users.id', $subQuery);
+        }
 
         // --- Logic การกรองข้อมูลตามสิทธิ์ ---
         // ถ้าไม่ใช่ SuperAdmin (ID 1) หรือ Adminจังหวัด (ID 2)
