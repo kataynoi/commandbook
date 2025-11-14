@@ -8,7 +8,7 @@ use CodeIgniter\Router\RouteCollection;
 
 // หน้าแรกหลังล็อกอิน -> Commands dashboard
 $routes->get('/', 'Commands::index', ['filter' => 'auth']);
-
+$routes->get('/privacy-policy', 'Home::privacy');
 // --------------------------------------------------------------------
 // กำหนด URL สำหรับระบบ Login / Register
 // --------------------------------------------------------------------

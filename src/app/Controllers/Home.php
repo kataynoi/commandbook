@@ -8,4 +8,8 @@ class Home extends BaseController
     {
         return view('auth/login.php');
     }
+     public function privacy()
+    {
+        return view('pages/privacy_policy');
+    }
 }

@@ -1,10 +1,4 @@
-<?php
-// --------------------------------------------------------------------
-// (2/2) View: login_view.php
-// --------------------------------------------------------------------
-// อัปเดตไฟล์ที่: app/Views/auth/login_view.php
-// ** ปรับปรุงส่วนแสดงข้อความแจ้งเตือน **
-?>
+
 <!DOCTYPE html>
 <html lang="th">
 
@@ -85,7 +79,7 @@
                         </div>
                     </div>
                     <div class="card-footer text-center py-3">
-                        <!-- <div class="small"><a href="<?= site_url('register') ?>">ยังไม่มีบัญชี? สมัครสมาชิกที่นี่</a></div> -->
+                        <div class="small"><a href="<?= site_url('privacy-policy') ?>" target="_blank">นโยบายคุ้มครองข้อมูลส่วนบุคคล (PDPA)</a></div>
                     </div>
                 </div>
             </div>
