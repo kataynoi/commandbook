@@ -33,10 +33,10 @@ services:
     ports:
       - "3308:3306"
     environment:
-      MYSQL_DATABASE: command_db
-      MYSQL_USER: command
-      MYSQL_PASSWORD: 1234
-      MYSQL_ROOT_PASSWORD: 1234
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASS}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASS}
     volumes:
       - db_data:/var/lib/mysql
     networks: # <--- เพิ่มส่วนนี้
