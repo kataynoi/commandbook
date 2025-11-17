@@ -81,7 +81,7 @@ $routes->group('reports', ['filter' => 'auth'], function ($routes) {
 // Commands (document upload / access)
 // --------------------------------------------------------------------
 $routes->get('commands', 'Commands::index');
-$routes->get('commands/new', 'Commands::new');
+$routes->get('commands/create', 'Commands::create');
 $routes->post('commands/save', 'Commands::save');
 $routes->get('commands/success', 'Commands::success');
 

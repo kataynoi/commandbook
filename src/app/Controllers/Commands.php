@@ -56,8 +56,9 @@ class Commands extends BaseController
         try {
             // สร้าง Query Builder เพื่อ Join ตาราง
             $builder = $this->docModel
-                            ->select('command_documents.*, users.fullname as uploader_name')
-                            ->join('users', 'users.id = command_documents.uploaded_by', 'left');
+                ->select('command_documents.id, command_documents.doc_number, command_documents.doc_title, command_documents.doc_date, command_documents.qr_token, users.fullname as uploader_name')
+                ->join('users', 'users.id = command_documents.uploaded_by', 'left')
+                ->groupBy('command_documents.id');
 
             if ($isAdminOrUploader) {
                 // Admin/Uploader เห็นทั้งหมด
@@ -65,7 +66,10 @@ class Commands extends BaseController
             } else {
                 // User ทั่วไปเห็นเฉพาะที่ได้รับสิทธิ์
                 $userHosp = session()->get('hospcode');
-                $accessDocIds = $this->accessModel->where('hospcode', $userHosp)->findColumn('command_id') ?? [];
+                $accessDocIds = $this->accessModel->where('hospcode', $userHosp)->findColumn('command_id');
+                if ($accessDocIds === null) {
+                    $accessDocIds = [];
+                }
                 
                 if (empty($accessDocIds)) {
                     $docs = [];
@@ -82,13 +86,13 @@ class Commands extends BaseController
 
         $data = [];
         foreach ($docs as $d) {
-            $qr = $d['qr_token'] ?? $d['token'] ?? $d['file_token'] ?? '';
+            $qr = isset($d['qr_token']) ? $d['qr_token'] : (isset($d['token']) ? $d['token'] : (isset($d['file_token']) ? $d['file_token'] : ''));
             $data[] = [
                 'id' => $d['id'],
                 'doc_number' => $d['doc_number'],
                 'doc_title' => $d['doc_title'],
                 'doc_date' => $d['doc_date'],
-                'uploader_name' => $d['uploader_name'] ?? 'N/A', 
+                'uploader_name' => isset($d['uploader_name']) ? $d['uploader_name'] : 'N/A',
                 'qr_token' => $qr,
                 'created_at' => $d['created_at'],
             ];
@@ -141,8 +145,20 @@ class Commands extends BaseController
     public function delete($id = null)
     {
         // Normalize id: accept parameter, POST or GET
-        $commandId = $id ?? $this->request->getPost('id') ?? $this->request->getGet('id') ?? null;
-
+        $commandId = $id;
+        if (empty($commandId)) {
+            $postId = $this->request->getPost('id');
+            if (!empty($postId)) {
+                $commandId = $postId;
+            } else {
+                $getId = $this->request->getGet('id');
+                $commandId = !empty($getId) ? $getId : null;
+            }
+        }
+        $roles = session()->get('roles');
+        if ($roles === null) {
+            $roles = [];
+        }
         if (empty($commandId)) {
             return $this->response->setStatusCode(400)->setJSON(['error' => 'Missing id']);
         }
@@ -151,7 +167,11 @@ class Commands extends BaseController
             return $this->response->setStatusCode(401)->setJSON(['error' => 'Unauthorized']);
         }
 
-        $roles = session()->get('roles') ?? [];
+        $roles = session()->get('roles');
+        if ($roles === null) {
+            $roles = [];
+        }
+
         if (! (in_array(1, $roles) || in_array(2, $roles))) {
             return $this->response->setStatusCode(403)->setJSON(['error' => 'Forbidden']);
         }
@@ -178,15 +198,21 @@ class Commands extends BaseController
     /**
      * หน้าอัปโหลดใหม่ / แก้ไข (เซ็ต $hospitals ให้ view)
      */
-    public function new()
+    public function create()
     {
         if (! session()->get('isLoggedIn')) {
             return redirect()->to('/login');
         }
 
         $hosModel = new ChospitalModel();
+        $rawRoles = session()->get('roles');
+        if ($rawRoles === null) {
+            $rawRoles = [];
+        }
+    
+        // โหลดรายการหน่วยงานเพื่อส่งให้ view
         $hospitals = $hosModel->orderBy('hospname', 'ASC')->findAll();
-
+    
         $data = [
             'hospitals' => $hospitals,
             'doc' => [], // ค่าเริ่มต้นสำหรับฟอร์ม
@@ -197,7 +223,10 @@ class Commands extends BaseController
         $editId = $this->request->getGet('edit');
         if ($editId) {
             // --- เพิ่มการตรวจสอบสิทธิ์ ---
-            $rawRoles = session()->get('roles') ?? [];
+            $rawRoles = session()->get('roles');
+            if ($rawRoles === null) {
+                $rawRoles = [];
+            }
             $roles = array_map('intval', (array) $rawRoles);
             $canEdit = in_array(1, $roles, true) || in_array(2, $roles, true);
 
@@ -211,9 +240,10 @@ class Commands extends BaseController
             if ($doc) {
                 $data['doc'] = $doc;
                 // ดึงรายการ hospcode ที่เคยเลือกไว้สำหรับเอกสารนี้
-                $data['access'] = $this->accessModel
-                                       ->where('command_id', $editId)
-                                       ->findColumn('hospcode') ?? [];
+                $accessList = $this->accessModel
+                                   ->where('command_id', $editId)
+                                   ->findColumn('hospcode');
+                $data['access'] = $accessList !== null ? $accessList : [];
             }
         }
 

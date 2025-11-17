@@ -104,7 +104,7 @@ $lineData = session()->get('line_register_data');
                     <p class="text-muted">กรุณาเลือกหน่วยบริการที่ท่านสังกัด</p>
                     <div class="row">
                         <!-- เพิ่ม input hidden เพื่อให้ส่ง changwatcode ไปกับฟอร์ม -->
-                        <input type="hidden" name="changwatcode" value="<?= esc($default_province ?? '') ?>">
+                        <input type="hidden" name="changwatcode" value="<?= esc(isset($default_province) ? $default_province : '') ?>">
                         <div class="col-md-12 mb-3">
                             <label for="hospcode" class="form-label">หน่วยบริการ</label>
                             <select class="form-select" id="hospcode" name="hospcode" required>

@@ -2,12 +2,18 @@
 <?= $this->section('content') ?>
 
 <div class="container mt-4">
-    <h3><i class="bi bi-files"></i> รายการหนังสือคำสั่งทั้งหมด</h3>
-
-    <?php if (in_array(1, session()->get('roles') ?? []) || in_array(2, session()->get('roles') ?? [])): ?>
-        <a href="<?= site_url('commands/new') ?>" class="btn btn-primary mb-3">
-            <i class="bi bi-file-earmark-arrow-up"></i> อัปโหลดเอกสารใหม่
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3>รายการหนังสือคำสั่ง</h3>
+        <a href="<?= site_url('commands/create') ?>" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> เพิ่มเอกสารใหม่
         </a>
+    </div>
+
+    <?php if (session()->getFlashdata('message')): ?>
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <?= session()->getFlashdata('message') ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
     <?php endif; ?>
 
     <table id="commandsTable" class="table table-striped table-hover" style="width:100%">
@@ -55,13 +61,13 @@ document.addEventListener('DOMContentLoaded', function () {
                     let actions = `<button class="btn btn-sm btn-info qr-btn" data-token="${token}"><i class="bi bi-qr-code"></i> QR</button>`;
                     
                     // Normalize roles from PHP session
-                    const rawRoles = <?= json_encode(session()->get('roles')) ?? '[]' ?>;
+                    const rawRoles = <?= json_encode(session()->get('roles') ? session()->get('roles') : []) ?>;
                     // Ensure roles is always an array of numbers
                     const roles = (Array.isArray(rawRoles) ? rawRoles : [rawRoles]).map(Number);
 
                     // Add Edit and Delete buttons for roles 1 or 2
                     if (roles.includes(1) || roles.includes(2)) {
-                        actions += ` <a class="btn btn-sm btn-warning" href="<?= site_url('commands/new') ?>?edit=${row.id}" title="แก้ไข"><i class="bi bi-pencil">แก้ไข</i></a>`;
+                        actions += ` <a class="btn btn-sm btn-warning" href="<?= site_url('commands/create') ?>?edit=${row.id}" title="แก้ไข"><i class="bi bi-pencil"></i>แก้ไข</a>`;
                         actions += ` <button class="btn btn-sm btn-danger delete-btn" data-id="${row.id}" title="ลบ"><i class="bi bi-trash"></i>ลบ</button>`;
                     }
                     return actions;

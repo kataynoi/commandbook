@@ -33,7 +33,10 @@ class Access extends BaseController
         }
 
         // ตรวจสิทธิ์: role 1/2 ข้ามการตรวจ, คนอื่นตรวจ hospcode
-        $roles = session()->get('roles') ?? [];
+        $roles = session()->get('roles');
+        if (empty($roles)) {
+            $roles = [];
+        }
         $isAdmin = in_array(1, (array)$roles) || in_array(2, (array)$roles);
         //dd($isAdmin); // แสดงค่า $isAdmin แล้วหยุดทำงาน
         if (! $isAdmin) {
@@ -55,9 +58,10 @@ class Access extends BaseController
         }
 
         // ตรวจไฟล์บนดิสก์
-        $rel = $doc['file_path'] ?? null; // ควรเป็น 'uploads/commands/<file>'
+        $rel = isset($doc['file_path']) ? $doc['file_path'] : null; // ควรเป็น 'uploads/commands/<file>'
         if (empty($rel)) {
-            log_message('error', 'Access::index missing file_path for doc=' . ($doc['id'] ?? 'n/a'));
+            $docId = isset($doc['id']) ? $doc['id'] : 'n/a';
+            log_message('error', 'Access::index missing file_path for doc=' . $docId);
             return $this->response->setStatusCode(404)->setBody('File not found');
         }
 
@@ -68,7 +72,7 @@ class Access extends BaseController
         }
 
         // ส่งไฟล์ PDF inline (หรือใช้ Content-Type ตามจริง)
-        $fileName = $doc['file_name'] ?? basename($path);
+        $fileName = isset($doc['file_name']) ? $doc['file_name'] : basename($path);
         return $this->response->setHeader('Content-Type', 'application/pdf')
                               ->setHeader('Content-Disposition', 'inline; filename="' . $fileName . '"')
                               ->setBody(file_get_contents($path));

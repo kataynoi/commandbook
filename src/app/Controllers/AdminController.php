@@ -31,7 +31,10 @@ class AdminController extends BaseController
     public function manageUsers()
     {
         $session = session();
-        $userRole = $session->get('roles') ?? [];
+        $userRole = $session->get('roles');
+        if ($userRole === null) {
+            $userRole = [];
+        }
         // โหลดข้อมูล Roles ทั้งหมดเพื่อส่งไปให้ Modal ใช้สร้าง Checkbox
         $cchangwatModel = new CchangwatModel();
         $provinces = $cchangwatModel->orderBy('changwatname', 'ASC')->findAll();
@@ -66,7 +69,10 @@ class AdminController extends BaseController
     {
         $userModel = new UserModel();
         $session = session();
-        $userRole = $session->get('roles') ?? [];
+        $userRole = $session->get('roles');
+        if ($userRole === null) {
+            $userRole = [];
+        }
 
         // Query Builder เพื่อดึงข้อมูลผู้ใช้พร้อมกับรายชื่อสิทธิ์ (Roles) ของพวกเขา
         $builder = $userModel
@@ -124,15 +130,19 @@ class AdminController extends BaseController
 
     public function getUserDetails($id)
     {
+        // แก้ไข: สร้าง instance ของ Model ที่จำเป็นก่อนใช้งาน
         $userModel = new UserModel();
         $userRoleModel = new UserRoleModel();
-        
+
         $user = $userModel->find($id);
         if (!$user) {
             return $this->response->setStatusCode(404)->setJSON(['error' => 'User not found']);
         }
 
-        $userRoles = $userRoleModel->where('user_id', $id)->findColumn('role_id') ?? [];
+        $userRoles = $userRoleModel->where('user_id', $id)->findColumn('role_id');
+        if ($userRoles === null) {
+            $userRoles = [];
+        }
 
         $data = [
             'id'              => $user['id'],
@@ -142,57 +152,10 @@ class AdminController extends BaseController
             'roles'           => $userRoles,
             'hospcode'        => $user['hospcode']
         ];
-
+        
+        // แก้ไข: เพิ่ม return statement เพื่อส่งข้อมูลกลับไป
         return $this->response->setJSON($data);
     }
-
-public function approveUser()
-    {
-        $userId = $this->request->getPost('user_id');
-        $status = $this->request->getPost('status');
-        $roles = $this->request->getPost('roles') ?? [];
-
-        // --- Validation ---
-        $rules = [
-            'user_id' => 'required|is_not_unique[users.id]',
-            'status'  => 'required|in_list[0,1,2,3]',
-            'roles'   => 'permit_empty|is_array'
-        ];
-        if (!$this->validate($rules)) {
-            return $this->response->setStatusCode(400)->setJSON(['error' => $this->validator->getErrors()]);
-        }
-
-        $userModel = new UserModel();
-        $userRoleModel = new UserRoleModel();
-        
-        $this->db->transStart();
-        
-        // 1. อัปเดตสถานะผู้ใช้
-        $userModel->update($userId, [
-            'status' => $status,
-            'approved_by' => $this->currentUser['id']
-        ]);
-
-        // 2. อัปเดต Roles
-        $userRoleModel->where('user_id', $userId)->delete();
-        if (!empty($roles)) {
-            $roleData = [];
-            foreach ($roles as $roleId) {
-                $roleData[] = ['user_id' => $userId, 'role_id' => $roleId];
-            }
-            $userRoleModel->insertBatch($roleData);
-        }
-
-        $this->db->transComplete();
-
-        if ($this->db->transStatus() === false) {
-            return $this->response->setStatusCode(500)->setJSON(['error' => 'Database transaction failed']);
-        }
-        
-        log_activity('approve_user', "อนุมัติและกำหนดสิทธิ์ผู้ใช้ ID: {$userId}", $userId);
-        return $this->response->setJSON(['success' => 'User status and roles updated successfully.']);
-    }
-
 
     /**
      * อัปเดตข้อมูลผู้ใช้และสิทธิ์ที่ได้รับมอบหมาย

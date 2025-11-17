@@ -32,7 +32,7 @@ $qrCodeImage = (new QRCode($options))->render($urlToAccessFile);
             <small>URL: <?= $urlToAccessFile ?></small>
         </p>
         
-        <a href="<?= site_url('commands/new') ?>" class="btn btn-primary mt-3">
+        <a href="<?= site_url('commands/create') ?>" class="btn btn-primary mt-3">
             <i class="bi bi-plus-circle"></i> อัปโหลดเอกสารฉบับอื่น
         </a>
     </div>
