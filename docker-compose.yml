@@ -41,6 +41,9 @@ services:
       - db_data:/var/lib/mysql
     networks: # <--- เพิ่มส่วนนี้
       - shared-network
+    command:
+      - --wait_timeout=31536000
+      - --interactive_timeout=31536000
 
 volumes:
   db_data:
