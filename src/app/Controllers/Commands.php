@@ -36,13 +36,18 @@ class Commands extends BaseController
     }
 
     /**
-     * DataTable AJAX source: return JSON list of documents filtered by role
+     * Data source for DataTables server-side processing
      */
     public function fetch()
     {
-        if (! session()->get('isLoggedIn')) {
-            return $this->response->setStatusCode(401)->setJSON(['error' => 'Unauthorized']);
+        if (! $this->request->isAJAX()) {
+            return $this->response->setStatusCode(400);
         }
+
+        $builder = $this->docModel
+            ->select('command_documents.id, command_documents.doc_number, command_documents.doc_title, command_documents.doc_date, command_documents.qr_token, users.fullname as uploader_name, command_documents.created_at') // <-- เพิ่ม created_at ตรงนี้
+            ->join('users', 'users.id = command_documents.uploaded_by', 'left')
+            ->groupBy('command_documents.id');
 
         // Normalize roles
         $rawRoles = session()->get('roles');
@@ -54,12 +59,6 @@ class Commands extends BaseController
         $isAdminOrUploader = count(array_intersect($roles, [1,2])) > 0;
 
         try {
-            // สร้าง Query Builder เพื่อ Join ตาราง
-            $builder = $this->docModel
-                ->select('command_documents.id, command_documents.doc_number, command_documents.doc_title, command_documents.doc_date, command_documents.qr_token, users.fullname as uploader_name')
-                ->join('users', 'users.id = command_documents.uploaded_by', 'left')
-                ->groupBy('command_documents.id');
-
             if ($isAdminOrUploader) {
                 // Admin/Uploader เห็นทั้งหมด
                 $docs = $builder->orderBy('command_documents.created_at', 'DESC')->findAll();
