@@ -69,15 +69,6 @@ $routes->group('dashboard', ['filter' => 'auth'], function ($routes) {
 // --------------------------------------------------------------------
 // Reports
 // --------------------------------------------------------------------
-$routes->group('reports', ['filter' => 'auth'], function ($routes) {
-    $routes->get('patient-summary', 'ReportController::patientSummary');
-    $routes->post('get-data', 'ReportController::getReportData');
-    $routes->post('get-hospitals', 'ReportController::getHospitalsInAmphur');
-    $routes->get('visit-summary', 'ReportController::visitSummary');
-    $routes->post('ajax-get-visit-summary', 'ReportController::ajaxGetVisitSummary');
-});
-
-// --------------------------------------------------------------------
 // Commands (document upload / access)
 // --------------------------------------------------------------------
 $routes->get('commands', 'Commands::index');
