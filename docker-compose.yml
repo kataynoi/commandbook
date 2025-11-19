@@ -41,7 +41,7 @@ services:
       MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASS}
       TZ: Asia/Bangkok # <-- เพิ่มสำหรับ MySQL
     volumes:
-      - db_data:/var/lib/mysql
+      - cmd_db_data:/var/lib/mysql
     networks: # <--- เพิ่มส่วนนี้
       - shared-network
     command:
@@ -51,7 +51,7 @@ services:
       - --default-time-zone=+07:00 # <-- เพิ่มบรรทัดนี้
 
 volumes:
-  db_data:
+  cmd_db_data:
 
 # ประกาศใช้งาน Network จากภายนอก
 networks: # <--- เพิ่มส่วนนี้เข้ามาล่างสุด
