@@ -16,6 +16,11 @@ class App extends BaseConfig
      *
      * E.g., http://example.com/
      */
+    // ไฟล์ app/Config/App.php
+
+    public string $sessionCookieName = 'cmd_session';   // 👈 ชื่อต้องไม่ซ้ำกับตัวบน
+    public string $cookiePath        = '/commandbook/'; // 👈 บังคับให้ใช้แค่ใน path นี้
+    public string $cookieName        = 'cmd_cookie';
     public string $baseURL = 'http://localhost:8082/';
 
     /**
