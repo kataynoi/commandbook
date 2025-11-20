@@ -9,7 +9,7 @@
 <?= $this->section('content') ?>
 
 <div class="container-fluid mt-4">
-    <h3 class="mb-3">จัดการผู้ใช้งาน</h3>
+    <h3 class="mb-3">จัดการผู้ใช้งานxxxx</h3>
     <div class="card shadow-sm">
         <div class="card-header">
             ผู้ใช้งานรอการอนุมัติและผู้ใช้งานทั้งหมด

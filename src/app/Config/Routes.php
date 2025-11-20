@@ -83,3 +83,23 @@ $routes->post('commands/delete/(:num)', 'Commands::delete/$1'); // delete (POST)
 $routes->get('commands/qr/(:segment)', 'Commands::qr/$1');
 
 $routes->get('access/(:segment)', 'Access::index/$1');
+
+
+/**
+ * --------------------------------------------------------------------
+ * Additional Routing
+ * --------------------------------------------------------------------
+ *
+ * There will often be times that you need additional routing and you
+ * need it to be able to override any defaults in this file. Environment
+ * based routes is one such time. require() additional route files here
+ * to make that happen.
+ *
+ * You will have access to the $routes object within that file without
+ * needing to reload it.
+ */
+if (is_file(APPPATH . 'Config/' . ENVIRONMENT . '/Routes.php')) {
+    require APPPATH . 'Config/' . ENVIRONMENT . '/Routes.php';
+}
+$routes->get('/dbtest', 'DbTestController::index');
+// เพิ่ม Route สำหรับทดสอบการเชื่อมต่อฐานข้อมูล

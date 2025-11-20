@@ -6,7 +6,7 @@ services:
     ports:
       - "8082:80"
     volumes:
-      - commandbook_code:/var/www/html # <-- เปลี่ยนเป็น Named Volume
+      - ./src:/var/www/html
       - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
     depends_on:
       - php
@@ -16,13 +16,13 @@ services:
   # 2. บริการ PHP
   php:
     build:
-      context: .
-      dockerfile: docker/php/Dockerfile
+      # --- จุดสำคัญ! แก้ไขตรงนี้ ---
+      context: . # เปลี่ยน context เป็นโฟลเดอร์โปรเจกต์ทั้งหมด
+      dockerfile: ./docker/php/Dockerfile # ระบุ Path ไปยัง Dockerfile ให้ชัดเจน
     container_name: command-php
-    environment:
-      - TZ=Asia/Bangkok
     volumes:
-      - commandbook_code:/var/www/html # <-- เปลี่ยนเป็น Named Volume
+      # --- จุดสำคัญ! เปลี่ยนมาใช้ Bind Mount ตรงนี้ ---
+      - ./src:/var/www/html
     networks:
       - commandbook-net
 
@@ -31,28 +31,26 @@ services:
     image: mysql:8.0
     container_name: command-db
     restart: unless-stopped
-    ports:
-      - "3308:3306"
     environment:
       MYSQL_DATABASE: ${DB_NAME}
       MYSQL_USER: ${DB_USER}
       MYSQL_PASSWORD: ${DB_PASS}
       MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASS}
-      TZ: Asia/Bangkok # <-- เพิ่มสำหรับ MySQL
+    ports:
+      - "3308:3306"
     volumes:
       - cmd_db_data:/var/lib/mysql
     networks:
       - commandbook-net
     command:
       - --default-authentication-plugin=mysql_native_password
-      - --wait_timeout=31536000
-      - --interactive_timeout=31536000
-      - --default-time-zone=+07:00 # <-- เพิ่มบรรทัดนี้
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --default-time-zone=+07:00
 
 volumes:
   cmd_db_data:
-  commandbook_code: {} # <-- ประกาศ Named Volume สำหรับซอร์สโค้ด
 
 # ให้ Docker Compose สร้างและจัดการ Network ของตัวเอง
 networks:
-  commandbook-net: {} # <-- แก้ไขส่วนนี้ให้ถูกต้อง
+  commandbook-net: {}
