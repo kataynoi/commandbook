@@ -274,21 +274,21 @@ class Commands extends BaseController
         // ตอน "แก้ไข" การอัปโหลดไฟล์เป็นทางเลือก
         if (!$isEdit) {
             $rules['command_file'] = [
-                'rules' => 'uploaded[command_file]|mime_in[command_file,application/pdf]|max_size[command_file,20480]', // 20MB
+                'rules' => 'uploaded[command_file]|mime_in[command_file,application/pdf]|max_size[command_file,76800]', // 75MB
                 'errors' => [
                     'uploaded' => 'กรุณาเลือกไฟล์คำสั่ง',
                     'mime_in' => 'ต้องเป็นไฟล์ .pdf เท่านั้น',
-                    'max_size' => 'ไฟล์มีขนาดใหญ่เกิน 20MB',
+                    'max_size' => 'ไฟล์มีขนาดใหญ่เกิน 75MB',
                 ]
             ];
         } else {
             // ถ้าเป็นการแก้ไข และมีการอัปโหลดไฟล์ใหม่ ให้ตรวจสอบไฟล์นั้นด้วย
             if ($this->request->getFile('command_file') && $this->request->getFile('command_file')->isValid()) {
                  $rules['command_file'] = [
-                    'rules' => 'mime_in[command_file,application/pdf]|max_size[command_file,20480]',
+                    'rules' => 'mime_in[command_file,application/pdf]|max_size[command_file,76800]',
                     'errors' => [
                         'mime_in' => 'ต้องเป็นไฟล์ .pdf เท่านั้น',
-                        'max_size' => 'ไฟล์มีขนาดใหญ่เกิน 20MB',
+                        'max_size' => 'ไฟล์มีขนาดใหญ่เกิน 75MB',
                     ]
                 ];
             }
