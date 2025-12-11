@@ -58,6 +58,16 @@ $routes->group('admin', ['filter' => 'auth'], function ($routes) {
 });
 
 // --------------------------------------------------------------------
+// Activity Logs (เฉพาะ Admin)
+// --------------------------------------------------------------------
+$routes->group('activity-logs', ['filter' => 'auth'], function ($routes) {
+    $routes->get('/', 'ActivityLogController::index');
+    $routes->post('fetch', 'ActivityLogController::fetch');
+    $routes->post('delete/(:num)', 'ActivityLogController::delete/$1');
+    $routes->post('cleanup', 'ActivityLogController::cleanup');
+});
+
+// --------------------------------------------------------------------
 // Dashboard (AJAX endpoints for charts)
 // --------------------------------------------------------------------
 $routes->group('dashboard', ['filter' => 'auth'], function ($routes) {

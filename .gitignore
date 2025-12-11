@@ -1,2 +1,37 @@
-# CodeIgniter 4
+# Environment Configuration
 .env
+.env.*
+!.env.example
+
+# CodeIgniter 4 Writable Directory
+src/writable/cache/*
+!src/writable/cache/index.html
+src/writable/logs/*
+!src/writable/logs/index.html
+src/writable/session/*
+!src/writable/session/index.html
+src/writable/uploads/*
+!src/writable/uploads/index.html
+src/writable/debugbar/*
+
+# Composer
+src/vendor/
+src/composer.lock
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Docker
+docker-compose.override.yml
+
+# Node modules (if any)
+node_modules/
+
+# Backup files
+*.bak
+*.backup

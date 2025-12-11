@@ -13,6 +13,7 @@ class Access extends BaseController
         $this->docModel = new CommandDocumentModel();
         $this->accessModel = new CommandAccessModel();
         helper('filesystem');
+        helper('activityLog'); // โหลด helper สำหรับบันทึก log
     }
 
     // GET /access/{token}
@@ -73,6 +74,19 @@ class Access extends BaseController
 
         // ส่งไฟล์ PDF inline (หรือใช้ Content-Type ตามจริง)
         $fileName = isset($doc['file_name']) ? $doc['file_name'] : basename($path);
+        
+        // บันทึก Activity Log สำหรับการดาวน์โหลด
+        $userId = session()->get('user_id');
+        $userName = session()->get('fullname');
+        $docTitle = isset($doc['doc_title']) ? $doc['doc_title'] : 'N/A';
+        $docNumber = isset($doc['doc_number']) ? $doc['doc_number'] : 'N/A';
+        
+        log_activity(
+            'download_document',
+            "ดาวน์โหลดเอกสาร: {$docTitle} (เลขที่: {$docNumber}) โดย {$userName}",
+            $doc['id']
+        );
+        
         return $this->response->setHeader('Content-Type', 'application/pdf')
                               ->setHeader('Content-Disposition', 'inline; filename="' . $fileName . '"')
                               ->setBody(file_get_contents($path));

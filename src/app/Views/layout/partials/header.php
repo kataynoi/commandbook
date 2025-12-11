@@ -35,6 +35,14 @@ $userRoles = session()->get('roles') ?? [];
                         </a>
                     <?php endif; ?>
                 </li>
+                <?php if (in_array(1, $userRoles)): ?>
+                <li>
+                    <a class="dropdown-item" href="<?= base_url('/activity-logs') ?>">
+                        <i class="fas fa-history fa-sm fa-fw mr-2 text-gray-400"></i>
+                        Activity Logs
+                    </a>
+                </li>
+                <?php endif; ?>
                 <li>
                     <hr class="dropdown-divider" />
                 </li>
