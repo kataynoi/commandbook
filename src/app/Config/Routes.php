@@ -6,8 +6,8 @@ use CodeIgniter\Router\RouteCollection;
  * @var RouteCollection $routes
  */
 
-// หน้าแรกหลังล็อกอิน -> Commands dashboard
-$routes->get('/', 'Commands::index', ['filter' => 'auth']);
+// หน้าแรกหลังล็อกอิน -> Dashboard
+$routes->get('/', 'Dashboard::index', ['filter' => 'auth']);
 $routes->get('/privacy-policy', 'Home::privacy');
 // --------------------------------------------------------------------
 // กำหนด URL สำหรับระบบ Login / Register
@@ -72,8 +72,7 @@ $routes->group('activity-logs', ['filter' => 'auth'], function ($routes) {
 // --------------------------------------------------------------------
 $routes->group('dashboard', ['filter' => 'auth'], function ($routes) {
     $routes->get('/', 'DashboardController::index');
-    $routes->get('data', 'DashboardController::getChartData');
-    $routes->post('get-hospitals', 'DashboardController::getHospitals');
+    $routes->get('data', 'DashboardController::getData');
 });
 
 // --------------------------------------------------------------------
