@@ -263,12 +263,17 @@ class Commands extends BaseController
         $isEdit = !empty($id);
 
         // 2. กำหนด Validation Rules
+        $isPublic = (bool) $this->request->getPost('is_public');
+
         $rules = [
             'doc_number' => 'required|string|max_length[100]',
             'doc_title'  => 'required|string|max_length[255]',
             'doc_date'   => 'required|valid_date',
-            'hospcodes'  => 'required',
         ];
+
+        if (! $isPublic) {
+            $rules['hospcodes'] = 'required';
+        }
 
         // กฎสำหรับไฟล์: บังคับให้อัปโหลดเฉพาะตอน "สร้างใหม่" เท่านั้น
         // ตอน "แก้ไข" การอัปโหลดไฟล์เป็นทางเลือก
@@ -326,6 +331,7 @@ class Commands extends BaseController
             'doc_number' => $this->request->getPost('doc_number'),
             'doc_title'  => $this->request->getPost('doc_title'),
             'description'  => $this->request->getPost('description'),
+            'is_public'  => $this->request->getPost('is_public') ? 1 : 0,
             'doc_date'   => $this->request->getPost('doc_date'),
             'uploaded_by'=> $this->session->get('user_id')
         ];
@@ -355,16 +361,15 @@ class Commands extends BaseController
                 $commandId = $this->docModel->getInsertID(); // ดึง ID ที่เพิ่งสร้าง
             }
 
-            // อัปเดตตาราง command_access
+            // อัปเดตตาราง command_access (เฉพาะเมื่อไม่ใช่ Public)
             $hospcodes = $this->request->getPost('hospcodes');
-            // ลบของเก่าออกทั้งหมดก่อน แล้วค่อยเพิ่มของใหม่
             $this->accessModel->where('command_id', $commandId)->delete();
-            
-            $accessData = [];
-            foreach ($hospcodes as $hospcode) {
-                $accessData[] = ['command_id' => $commandId, 'hospcode' => $hospcode];
-            }
-            if (!empty($accessData)) {
+
+            if (! $isPublic && ! empty($hospcodes)) {
+                $accessData = [];
+                foreach ($hospcodes as $hospcode) {
+                    $accessData[] = ['command_id' => $commandId, 'hospcode' => $hospcode];
+                }
                 $this->accessModel->insertBatch($accessData);
             }
 

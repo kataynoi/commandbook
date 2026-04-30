@@ -9,6 +9,7 @@ class CommandDocumentModel extends Model
         'doc_number',
         'doc_title',
         'description',
+        'is_public',
         'doc_date',
         'file_name',
         'file_path',

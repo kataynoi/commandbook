@@ -19,9 +19,6 @@ class Access extends BaseController
     // GET /access/{token}
     public function index($token = null)
     {
-        if (! session()->get('isLoggedIn')) {
-            return redirect()->to('/login');
-        }
         if (empty($token)) {
             return $this->response->setStatusCode(404)->setBody('Not found');
         }
@@ -33,28 +30,36 @@ class Access extends BaseController
             return $this->response->setStatusCode(404)->setBody('Not found');
         }
 
-        // ตรวจสิทธิ์: role 1/2 ข้ามการตรวจ, คนอื่นตรวจ hospcode
-        $roles = session()->get('roles');
-        if (empty($roles)) {
-            $roles = [];
-        }
-        $isAdmin = in_array(1, (array)$roles) || in_array(2, (array)$roles);
-        //dd($isAdmin); // แสดงค่า $isAdmin แล้วหยุดทำงาน
-        if (! $isAdmin) {
-            $userHosp = session()->get('hospcode');
-            if (empty($userHosp)) {
-                return $this->response->setStatusCode(403)->setBody('Access Denied');
+        // ถ้าเอกสารเป็นสาธารณะ ข้ามการตรวจสอบ Login และสิทธิ์
+        $isPublic = !empty($doc['is_public']);
+
+        if (! $isPublic) {
+            if (! session()->get('isLoggedIn')) {
+                return redirect()->to('/login');
             }
-            // รองรับทั้ง schema ที่เก็บ doc_id หรือ command_id
-            $has = $this->accessModel
-                        ->groupStart()
-                            ->Where('command_id', $doc['id'])
-                        ->groupEnd()
-                        ->where('hospcode', $userHosp)
-                        ->first();
-            if (! $has) {
-                log_message('warning', 'Access::index forbidden. token=' . $token . ' hosp=' . $userHosp);
-                return $this->response->setStatusCode(403)->setBody('Access Denied');
+
+            // ตรวจสิทธิ์: role 1/2 ข้ามการตรวจ, คนอื่นตรวจ hospcode
+            $roles = session()->get('roles');
+            if (empty($roles)) {
+                $roles = [];
+            }
+            $isAdmin = in_array(1, (array)$roles) || in_array(2, (array)$roles);
+            if (! $isAdmin) {
+                $userHosp = session()->get('hospcode');
+                if (empty($userHosp)) {
+                    return $this->response->setStatusCode(403)->setBody('Access Denied');
+                }
+                // รองรับทั้ง schema ที่เก็บ doc_id หรือ command_id
+                $has = $this->accessModel
+                            ->groupStart()
+                                ->Where('command_id', $doc['id'])
+                            ->groupEnd()
+                            ->where('hospcode', $userHosp)
+                            ->first();
+                if (! $has) {
+                    log_message('warning', 'Access::index forbidden. token=' . $token . ' hosp=' . $userHosp);
+                    return $this->response->setStatusCode(403)->setBody('Access Denied');
+                }
             }
         }
 
@@ -76,7 +81,6 @@ class Access extends BaseController
         $fileName = isset($doc['file_name']) ? $doc['file_name'] : basename($path);
         
         // บันทึก Activity Log สำหรับการดาวน์โหลด
-        $userId = session()->get('user_id');
         $userName = session()->get('fullname');
         $docTitle = isset($doc['doc_title']) ? $doc['doc_title'] : 'N/A';
         $docNumber = isset($doc['doc_number']) ? $doc['doc_number'] : 'N/A';

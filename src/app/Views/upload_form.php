@@ -37,6 +37,17 @@
         </div>
 
         <div class="mb-3">
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="is_public" name="is_public" value="1"
+                    <?= (old('is_public') == '1' || (isset($doc['is_public']) && $doc['is_public'] == 1)) ? 'checked' : '' ?>>
+                <label class="form-check-label fw-bold" for="is_public">
+                    คำสั่งไม่เป็นความลับ เข้าถึงได้โดยสาธารณะ
+                </label>
+                <div class="form-text text-muted">เมื่อเปิดใช้งาน ผู้ใช้ทั่วไปสามารถ Scan QR Code เพื่อเปิดเอกสารได้โดยไม่ต้อง Login</div>
+            </div>
+        </div>
+
+        <div class="mb-3" id="hospcodes-wrapper">
             <label for="hospcodes" class="form-label">กำหนดสิทธิ์การเข้าถึง (เลือกได้หลายหน่วยงาน)</label>
             <select class="form-select" id="hospcodes" name="hospcodes[]" multiple size="26" required>
                 <?php
@@ -69,5 +80,27 @@
         </button>
     </form>
 </div>
+
+<script>
+(function () {
+    const checkbox = document.getElementById('is_public');
+    const wrapper  = document.getElementById('hospcodes-wrapper');
+    const select   = document.getElementById('hospcodes');
+
+    function toggleHospcodes(isPublic) {
+        select.disabled = isPublic;
+        select.required = !isPublic;
+        wrapper.style.opacity = isPublic ? '0.4' : '1';
+        wrapper.style.pointerEvents = isPublic ? 'none' : '';
+    }
+
+    // ตั้งค่าเริ่มต้นตามสถานะ checkbox ตอนโหลดหน้า
+    toggleHospcodes(checkbox.checked);
+
+    checkbox.addEventListener('change', function () {
+        toggleHospcodes(this.checked);
+    });
+})();
+</script>
 
 <?= $this->endSection() ?>
