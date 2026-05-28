@@ -328,12 +328,13 @@ class Commands extends BaseController
 
         // 4. เตรียมข้อมูลเพื่อบันทึกลง Database
         $docData = [
-            'doc_number' => $this->request->getPost('doc_number'),
-            'doc_title'  => $this->request->getPost('doc_title'),
-            'description'  => $this->request->getPost('description'),
-            'is_public'  => $this->request->getPost('is_public') ? 1 : 0,
-            'doc_date'   => $this->request->getPost('doc_date'),
-            'uploaded_by'=> $this->session->get('user_id')
+            'doc_number'    => $this->request->getPost('doc_number'),
+            'doc_title'     => $this->request->getPost('doc_title'),
+            'description'   => $this->request->getPost('description'),
+            'is_public'     => $this->request->getPost('is_public') ? 1 : 0,
+            'add_watermark' => $this->request->getPost('add_watermark') ? 1 : 0,
+            'doc_date'      => $this->request->getPost('doc_date'),
+            'uploaded_by'   => $this->session->get('user_id')
         ];
 
         // รวมข้อมูลไฟล์เข้าไป (ถ้ามี)

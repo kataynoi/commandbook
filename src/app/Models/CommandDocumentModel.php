@@ -10,6 +10,7 @@ class CommandDocumentModel extends Model
         'doc_title',
         'description',
         'is_public',
+        'add_watermark',
         'doc_date',
         'file_name',
         'file_path',

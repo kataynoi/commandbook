@@ -2,7 +2,8 @@
 
 use App\Models\CommandDocumentModel;
 use App\Models\CommandAccessModel;
-use App\Models\CommandDownloadModel; // !! ตัวบันทึก Log
+use App\Models\CommandDownloadModel;
+use App\Libraries\PdfWatermarkService;
 
 class Download extends BaseController
 {
@@ -68,11 +69,24 @@ class Download extends BaseController
              return $this->response->setStatusCode(500)->setBody('ไม่พบไฟล์ในระบบ (File not found on server)');
         }
 
-        // ใช้ response->download() ของ CI4 เพื่อส่งไฟล์
-        // พารามิเตอร์ที่ 2 (null) จะให้บราวเซอร์พยายามแสดง PDF เลย (ถ้าทำได้)
-        // setFileName() จะทำให้ชื่อไฟล์ตอนดาวน์โหลดเป็นชื่อเดิม (ไม่ใช่ชื่อสุ่ม)
-        return $this->response
-                    ->download($filePath, null)
-                    ->setFileName($doc['file_name']);
+        // ใส่ลายน้ำชื่อผู้ดาวน์โหลดลงใน PDF (เฉพาะเมื่อเอกสารกำหนดให้ใส่ลายน้ำ)
+        $shouldWatermark = !isset($doc['add_watermark']) || (int) $doc['add_watermark'] === 1;
+        if ($shouldWatermark) {
+            $userName = $this->session->get('fullname');
+            $watermarkName = !empty($userName) ? $userName : 'ผู้ใช้งาน';
+            try {
+                $watermarkService = new PdfWatermarkService();
+                $pdfContent = $watermarkService->addWatermark($filePath, $watermarkName);
+            } catch (\Throwable $e) {
+                log_message('error', 'Watermark failed: ' . $e->getMessage());
+                $pdfContent = file_get_contents($filePath);
+            }
+        } else {
+            $pdfContent = file_get_contents($filePath);
+        }
+
+        return $this->response->setHeader('Content-Type', 'application/pdf')
+                              ->setHeader('Content-Disposition', 'attachment; filename="' . $doc['file_name'] . '"')
+                              ->setBody($pdfContent);
     }
 }

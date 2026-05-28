@@ -47,6 +47,27 @@
             </div>
         </div>
 
+        <div class="mb-3">
+            <div class="form-check">
+                <?php
+                    // ค่าเริ่มต้น: checked (เอกสารใหม่หรือไม่มีค่าใน DB ให้ checked)
+                    $watermarkChecked = true;
+                    if (old('add_watermark') !== null) {
+                        $watermarkChecked = old('add_watermark') == '1';
+                    } elseif (isset($doc['add_watermark'])) {
+                        $watermarkChecked = (int) $doc['add_watermark'] === 1;
+                    }
+                ?>
+                <input class="form-check-input" type="hidden" name="add_watermark_present" value="1">
+                <input class="form-check-input" type="checkbox" id="add_watermark" name="add_watermark" value="1"
+                    <?= $watermarkChecked ? 'checked' : '' ?>>
+                <label class="form-check-label fw-bold" for="add_watermark">
+                    ใส่ลายน้ำผู้ดาวน์โหลดในเอกสาร
+                </label>
+                <div class="form-text text-muted">เมื่อเปิดใช้งาน เอกสาร PDF ที่ถูกดาวน์โหลดจะมีลายน้ำชื่อผู้ดาวน์โหลดปรากฏในทุกหน้า</div>
+            </div>
+        </div>
+
         <div class="mb-3" id="hospcodes-wrapper">
             <label for="hospcodes" class="form-label">กำหนดสิทธิ์การเข้าถึง (เลือกได้หลายหน่วยงาน)</label>
             <select class="form-select" id="hospcodes" name="hospcodes[]" multiple size="26" required>

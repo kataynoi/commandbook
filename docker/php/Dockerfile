@@ -27,11 +27,17 @@ RUN apk add --no-cache --virtual .build-deps $PHPIZE_DEPS \
     && apk del .build-deps \
     && rm -rf /var/cache/apk/*
 
+# ติดตั้ง Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
 # สร้าง working directory
 WORKDIR /var/www/html
 
 # คัดลอกซอร์สโค้ดทั้งหมดจากโฟลเดอร์ src เข้าไปใน Image
 COPY ./src /var/www/html
+
+# ติดตั้ง PHP dependencies (ใช้ update เพื่อ sync lock file กับ composer.json)
+RUN composer update --no-dev --optimize-autoloader --no-interaction
 
 # สร้างโครงสร้างโฟลเดอร์สำหรับอัปโหลดไฟล์และเปลี่ยนเจ้าของไฟล์ให้เป็น user ของ web server
 RUN mkdir -p /var/www/html/writable/uploads/commands \

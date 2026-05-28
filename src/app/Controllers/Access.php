@@ -2,6 +2,7 @@
 
 use App\Models\CommandDocumentModel;
 use App\Models\CommandAccessModel;
+use App\Libraries\PdfWatermarkService;
 
 class Access extends BaseController
 {
@@ -84,15 +85,30 @@ class Access extends BaseController
         $userName = session()->get('fullname');
         $docTitle = isset($doc['doc_title']) ? $doc['doc_title'] : 'N/A';
         $docNumber = isset($doc['doc_number']) ? $doc['doc_number'] : 'N/A';
-        
+
         log_activity(
             'download_document',
             "ดาวน์โหลดเอกสาร: {$docTitle} (เลขที่: {$docNumber}) โดย {$userName}",
             $doc['id']
         );
-        
+
+        // ใส่ลายน้ำชื่อผู้ดาวน์โหลดลงใน PDF (เฉพาะเมื่อเอกสารกำหนดให้ใส่ลายน้ำ)
+        $shouldWatermark = !isset($doc['add_watermark']) || (int) $doc['add_watermark'] === 1;
+        if ($shouldWatermark) {
+            $watermarkName = !empty($userName) ? $userName : 'ผู้ใช้งาน';
+            try {
+                $watermarkService = new PdfWatermarkService();
+                $pdfContent = $watermarkService->addWatermark($path, $watermarkName);
+            } catch (\Throwable $e) {
+                log_message('error', 'Watermark failed: ' . $e->getMessage());
+                $pdfContent = file_get_contents($path);
+            }
+        } else {
+            $pdfContent = file_get_contents($path);
+        }
+
         return $this->response->setHeader('Content-Type', 'application/pdf')
                               ->setHeader('Content-Disposition', 'inline; filename="' . $fileName . '"')
-                              ->setBody(file_get_contents($path));
+                              ->setBody($pdfContent);
     }
 }
