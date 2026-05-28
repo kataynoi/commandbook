@@ -8,6 +8,27 @@ class PdfWatermarkService
 {
     public function addWatermark(string $inputPath, string $watermarkText): string
     {
+        try {
+            return $this->renderWatermarkedPdf($inputPath, $watermarkText);
+        } catch (\Throwable $e) {
+            // PDF compression รุ่นใหม่ (object streams) FPDI ฟรีอ่านไม่ได้
+            // ลอง preprocess ด้วย qpdf แล้ว retry
+            if ($this->isCompressionError($e->getMessage())) {
+                $processedPath = $this->preprocessWithQpdf($inputPath);
+                if ($processedPath !== null) {
+                    try {
+                        return $this->renderWatermarkedPdf($processedPath, $watermarkText);
+                    } finally {
+                        @unlink($processedPath);
+                    }
+                }
+            }
+            throw $e;
+        }
+    }
+
+    private function renderWatermarkedPdf(string $inputPath, string $watermarkText): string
+    {
         $pdf = new Fpdi();
         $pdf->setPrintHeader(false);
         $pdf->setPrintFooter(false);
@@ -44,7 +65,6 @@ class PdfWatermarkService
         $label = 'Downloader: ' . $text;
         $cx = $width / 2;
 
-        // วาง 3 ตำแหน่งตามแนวตั้ง: บน กลาง ล่าง
         $yRatios = [0.25, 0.50, 0.75];
         foreach ($yRatios as $ratio) {
             $cy = $height * $ratio;
@@ -57,5 +77,46 @@ class PdfWatermarkService
         }
 
         $pdf->SetAlpha(1);
+    }
+
+    private function isCompressionError(string $message): bool
+    {
+        return stripos($message, 'compression technique') !== false
+            || stripos($message, 'cross-reference') !== false
+            || stripos($message, 'not supported') !== false;
+    }
+
+    private function preprocessWithQpdf(string $inputPath): ?string
+    {
+        static $qpdfPath = null;
+        if ($qpdfPath === null) {
+            $which = trim((string) @shell_exec('command -v qpdf 2>/dev/null'));
+            $qpdfPath = $which !== '' ? $which : false;
+        }
+        if ($qpdfPath === false) {
+            log_message('error', 'qpdf not available in container; cannot preprocess PDF');
+            return null;
+        }
+
+        $tempPath = sys_get_temp_dir() . DIRECTORY_SEPARATOR
+                  . uniqid('pdfwm_', true) . '.pdf';
+
+        $cmd = sprintf(
+            '%s --object-streams=disable --stream-data=uncompress %s %s 2>&1',
+            escapeshellcmd($qpdfPath),
+            escapeshellarg($inputPath),
+            escapeshellarg($tempPath)
+        );
+
+        exec($cmd, $output, $returnCode);
+
+        // qpdf คืน 0=ok, 3=warning-but-ok ใช้ได้ทั้งคู่
+        if (($returnCode !== 0 && $returnCode !== 3) || !file_exists($tempPath)) {
+            log_message('error', 'qpdf preprocessing failed (code=' . $returnCode . '): ' . implode("\n", $output));
+            @unlink($tempPath);
+            return null;
+        }
+
+        return $tempPath;
     }
 }

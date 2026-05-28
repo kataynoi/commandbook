@@ -16,6 +16,7 @@ RUN apk add --no-cache --virtual .build-deps $PHPIZE_DEPS \
         zlib \
         libzip \
         icu-libs \
+        qpdf \
         libpng-dev \
         libjpeg-turbo-dev \
         libwebp-dev \
