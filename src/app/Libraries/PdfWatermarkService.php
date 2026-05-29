@@ -58,11 +58,11 @@ class PdfWatermarkService
 
     private function drawWatermark(Fpdi $pdf, float $width, float $height, string $text): void
     {
-        $pdf->SetFont('freeserif', 'B', 20);
         $pdf->SetTextColor(150, 150, 150);
         $pdf->SetAlpha(0.35);
 
-        $label = 'Downloader: ' . $text;
+        $line1 = 'Downloader: ' . $text;
+        $line2 = 'Downloaded: ' . date('Y-m-d H:i:s');
         $cx = $width / 2;
 
         $yRatios = [0.25, 0.50, 0.75];
@@ -71,8 +71,17 @@ class PdfWatermarkService
 
             $pdf->StartTransform();
             $pdf->Rotate(25, $cx, $cy);
-            $pdf->SetXY($cx - 90, $cy - 6);
-            $pdf->Cell(180, 12, $label, 0, 0, 'C');
+
+            // บรรทัดที่ 1: ชื่อผู้ดาวน์โหลด (font size 20) — เหนือจุดศูนย์กลาง
+            $pdf->SetFont('freeserif', 'B', 20);
+            $pdf->SetXY($cx - 90, $cy - 12);
+            $pdf->Cell(180, 12, $line1, 0, 0, 'C');
+
+            // บรรทัดที่ 2: วันเวลาที่ดาวน์โหลด (font size 16) — ใต้บรรทัดแรก
+            $pdf->SetFont('freeserif', '', 16);
+            $pdf->SetXY($cx - 90, $cy + 1);
+            $pdf->Cell(180, 10, $line2, 0, 0, 'C');
+
             $pdf->StopTransform();
         }
 
